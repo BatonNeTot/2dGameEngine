@@ -3,5 +3,6 @@
   <xs:element name="Background" type="Background"/>
   <xs:complexType name="Background">
     <xs:attribute type="xs:string" name="source"/>
+    <xs:attribute type="xs:boolean" name="stretched" default="false"/>
   </xs:complexType>
 </xs:schema>
