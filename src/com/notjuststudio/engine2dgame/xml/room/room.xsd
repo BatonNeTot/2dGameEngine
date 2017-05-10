@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Room" type="Room"/>
+
+  <xs:element name="View">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:float" name="x"/>
+        <xs:element type="xs:float" name="y"/>
+        <xs:element type="xs:unsignedShort" name="width"/>
+        <xs:element type="xs:unsignedShort" name="height"/>
+        <xs:element type="xs:float" name="view_x"/>
+        <xs:element type="xs:float" name="view_y"/>
+        <xs:element type="xs:unsignedShort" name="view_width"/>
+        <xs:element type="xs:unsignedShort" name="view_height"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Entity">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:float" name="x"/>
+        <xs:element type="xs:float" name="y"/>
+      </xs:sequence>
+      <xs:attribute type="xs:ID" name="id"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="Room">
+    <xs:sequence>
+      <xs:element type="xs:unsignedShort" name="width"/>
+      <xs:element type="xs:unsignedShort" name="height"/>
+      <xs:element type="xs:unsignedShort" name="view_width" minOccurs="0"/>
+      <xs:element type="xs:unsignedShort" name="view_height" minOccurs="0"/>
+      <xs:element ref="Entity" maxOccurs="unbounded" minOccurs="0"/>
+      <xs:element ref="View" maxOccurs="16" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:boolean" name="usingViews" default="false"/>
+    <xs:attribute type="xs:ID" name="background" use="optional"/>
+  </xs:complexType>
+</xs:schema>

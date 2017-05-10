@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Entity" type="Entity"/>
+  <xs:complexType name="Entity">
+    <xs:sequence>
+      <xs:element type="xs:string" name="event_init"/>
+      <xs:element type="xs:string" name="event_step"/>
+      <xs:element type="xs:string" name="event_draw"/>
+      <xs:element type="xs:string" name="event_destroy"/>
+    </xs:sequence>
+    <xs:attribute type="xs:ID" name="sprite"/>
+    <xs:attribute type="xs:boolean" name="visible" default="true"/>
+    <xs:attribute type="xs:float" name="depth" default="0"/>
+  </xs:complexType>
+</xs:schema>

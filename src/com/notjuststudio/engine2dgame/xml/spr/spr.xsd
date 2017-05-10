@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Sprite" type="Sprite"/>
+  <xs:complexType name="Sprite">
+    <xs:sequence>
+      <xs:element type="xs:int" name="x_offset" default="0"/>
+      <xs:element type="xs:int" name="y_offset" default="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="source"/>
+  </xs:complexType>
+</xs:schema>

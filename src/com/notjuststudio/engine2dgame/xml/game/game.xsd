@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Game" type="Game"/>
+
+  <xs:complexType name="source">
+    <xs:attribute type="xs:ID" name="id" use="required"/>
+    <xs:attribute type="xs:string" name="source" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="Game">
+    <xs:sequence>
+      <xs:element name="sprite" type="source" maxOccurs="unbounded"/>
+      <xs:element name="background" type="source" maxOccurs="unbounded"/>
+      <xs:element name="font" type="source" maxOccurs="unbounded"/>
+      <xs:element name="entity" type="source" maxOccurs="unbounded"/>
+      <xs:element name="room" type="source" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="title" default="Game"/>
+    <xs:attribute type="xs:string" name="icon"/>
+    <xs:attribute type="xs:ID" name="backgroundID"/>
+  </xs:complexType>
+</xs:schema>
