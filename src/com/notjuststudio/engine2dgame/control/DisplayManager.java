@@ -109,7 +109,7 @@ public class DisplayManager {
         return Display.isCloseRequested() || closeRequest;
     }
 
-    public static void closeRequest() {
+    static void closeRequest() {
         closeRequest = true;
     }
 

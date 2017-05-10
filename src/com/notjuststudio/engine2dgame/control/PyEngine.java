@@ -39,7 +39,7 @@ public class PyEngine {
         loadClasses(Main.class);
         exec("import math");
         exec("from java.awt import Color");
-        exec("exit = quit = DisplayManager.closeRequest");
+        exec("exit = quit = Game.closeRequest");
 
         exec("class __objs__(object):\n" +
                 "    pass");

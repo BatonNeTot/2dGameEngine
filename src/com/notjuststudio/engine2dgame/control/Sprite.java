@@ -21,6 +21,8 @@ public class Sprite {
     int xOffset;
     int yOffset;
 
+    boolean isAccurateCollusionCheck;
+
     BufferedImage image;
     int textureID;
 
@@ -40,6 +42,8 @@ public class Sprite {
             textureID = 0;
         else
             textureID = Loader.loadTexture(image, GL14.GL_MIRRORED_REPEAT);
+
+        isAccurateCollusionCheck = tmp.isAccurateCollusionCheck();
 
         xOffset = tmp.getXOffset();
         yOffset = tmp.getYOffset();

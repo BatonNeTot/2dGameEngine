@@ -17,12 +17,16 @@ public class Background {
 
     private static Map<String, Background> backgroundMap = new HashMap<>();
 
+    boolean stretched;
+
     BufferedImage image;
     int textureID;
 
     private Background(String filePath) {
         com.notjuststudio.engine2dgame.xml.back.Background tmp =
                 Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.back.Background.class);
+
+        stretched = tmp.isStretched();
 
         image = ImageLoader.loadImage(new File(tmp.getSource()));
         if (image == null)

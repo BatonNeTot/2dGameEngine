@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public class Manager {
 
-    private static String SCREENSHOT_NAME = "Screenshot";
+    static String SCREENSHOT_NAME = "Screenshot";
 
     static String background;
 
@@ -26,12 +26,6 @@ public class Manager {
         return result;
     }
 
-    public static Entity instance_create(float x, float y, String id) {
-        Entity entity = instanceCreate(x,y,id,Manager.currentRoom);
-        entity.init();
-        return entity;
-    }
-
     // ROOM
 
     static void changeRoom() {
@@ -41,36 +35,7 @@ public class Manager {
         }
     }
 
-    public static void room_goto(String id) {
-        isChangingRoom = true;
-        nextRoomId = id;
-    }
-
     // GAME
 
-    public static void game_screenshot_save() {
-        for (int i = 1;;i++) {
-            File file = new File(SCREENSHOT_NAME + "_" + i + ".png");
-            if (file.exists())
-                continue;
-            try {
-                ImageIO.write(Loader.loadImageFromScreen(), "png", file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-    }
-
-    public static void game_screenshot_save(String fileName) {
-        File file = new File(fileName + ".png");
-        if (file.exists())
-            return;
-        try {
-            ImageIO.write(Loader.loadImageFromScreen(), "png", file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
 }

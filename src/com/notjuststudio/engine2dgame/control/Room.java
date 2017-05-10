@@ -193,4 +193,19 @@ public class Room {
         }
     }
 
+
+    public static void change(String id) {
+        Manager.isChangingRoom = true;
+        Manager.nextRoomId = id;
+    }
+
+    public static int getWidth() {
+        return Manager.currentRoom.width;
+    }
+
+
+    public static int getHeight() {
+        return Manager.currentRoom.height;
+    }
+
 }

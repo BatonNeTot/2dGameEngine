@@ -46,10 +46,10 @@ public class Draw {
                 yOffset = text.getHeight();
                 break;
             case Text.CENTER:
-                yOffset = (text.getHeight() - (int) Math.floor((float) text.size * 1/ 3)) / 2;
+                yOffset = (text.getHeight()) / 2;
                 break;
             case Text.BOTTOM:
-                yOffset = (int) Math.floor((float) text.size / 9);
+                yOffset = (int) Math.floor((float) text.size / 8);
                 break;
         }
         MasterRender.renderGUI(text.textureID,

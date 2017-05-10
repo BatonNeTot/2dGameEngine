@@ -59,7 +59,15 @@ class MasterRender {
         if (Manager.currentRoom.background != null) {
             setShader(ShaderProgram.getBackgroundShader());
             Background back = Background.getBackground(Manager.currentRoom.background);
-            renderBackground(back.textureID, new Vector2f(Manager.currentRoom.width / (float)back.image.getWidth(), Manager.currentRoom.height / (float)back.image.getHeight()));
+            float xScale, yScale;
+            if (back.stretched) {
+                xScale = 1;
+                yScale = 1;
+            } else {
+                xScale = Manager.currentRoom.width / (float)back.image.getWidth();
+                yScale = Manager.currentRoom.height / (float)back.image.getHeight();
+            }
+            renderBackground(back.textureID, new Vector2f(xScale, yScale));
         }
         setShader(ShaderProgram.getEntityShader());
         Manager.currentRoom.entities.sort(Entity::compareTo);

@@ -6,6 +6,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,11 +73,11 @@ public class Text {
         return sum;
     }
 
-    public Text setWidth(int width) {
-        this.width = width;
-        this.needToUpdate = true;
-        return this;
-    }
+//    public Text setWidth(int width) {
+//        this.width = width;
+//        this.needToUpdate = true;
+//        return this;
+//    }
 
     private void setWidth() {
         int sum, max = 0;
@@ -137,6 +138,7 @@ public class Text {
                     line.append(" ").append(word);
                 }
             }
+            lines.add(i, line.toString());
         }
         return lines.toArray(new String[lines.size()]);
     }
@@ -144,12 +146,14 @@ public class Text {
     void update() {
         GL11.glDeleteTextures(textureID);
         int id = Loader.createFrameBuffer();
+        setWidth();
+        setHeight();
         textureID = Loader.createTextureAttachment(width, height);
         Loader.bindDefaultFrameBuffer();
         MasterRender.prepareRender();
         List<Char> characters = new ArrayList<>();
         int xCursor = 0;
-        int yCursor = height - (int) Math.floor((float) size / 4 * 5);
+        int yCursor = height - (int) Math.floor((float) size  * 9 / 8);
 
         String[] lines = format();
         for (String line : lines) {
@@ -178,6 +182,9 @@ public class Text {
         MasterRender.renderText(this, characters, id, width, height);
         MasterRender.closeRender();
         GL30.glDeleteFramebuffers(id);
+
+        BufferedImage image = Loader.loadImageFromTexture(textureID);
+        image = image;
 
         needToUpdate = false;
     }
@@ -254,6 +261,7 @@ public class Text {
 
     public Text setSize(int size) {
         this.size = size;
+        this.scale = (float)this.size/this.font.size;
         this.needToUpdate = true;
         return this;
     }

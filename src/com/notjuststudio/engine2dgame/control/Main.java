@@ -71,7 +71,7 @@ public class Main {
 
             //init
             PyEngine.err.println("Initialization...");
-            DisplayManager.init(gameKeeper.getTitle(), gameKeeper.getIcon(), DisplayManager.WINDOWED);
+            DisplayManager.init(gameKeeper.getTitle(), gameKeeper.getIcon(), DisplayManager.WINDOWED_BORDERLESS);
             Loader.init();
             MasterRender.init();
             PyEngine.init();
@@ -96,7 +96,7 @@ public class Main {
 
             Manager.background = gameKeeper.getBackgroundID();
 
-            Manager.room_goto(gameKeeper.getRoom().get(0).getId());
+            Room.change(gameKeeper.getRoom().get(0).getId());
 
             //loop
             PyEngine.err.println("Starting main loop...");
@@ -110,7 +110,7 @@ public class Main {
                 InputManager.update();
 
                 if (InputManager.isKeyTouched(InputManager.KEY_F11))
-                    Manager.game_screenshot_save();
+                    com.notjuststudio.engine2dgame.control.Game.takeScreenshot();
                 if (InputManager.isKeyTouched(InputManager.KEY_F4)) {
                     DisplayManager.setFullscreenState(DisplayManager.getFullscreenState() == 1 ? 0 : DisplayManager.getFullscreenState() + 1);
                     DisplayManager.updateDisplaySetting();
