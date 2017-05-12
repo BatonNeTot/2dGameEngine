@@ -10,17 +10,22 @@ public class Draw {
     static boolean isDraw = false;
 
     public static void sprite(float x, float y, String id) {
+        sprite(x,y,1,id);
+    }
+
+    public static void sprite(float x, float y, float scale, String id) {
         if (!isDraw) return;
         MasterRender.setShader(ShaderProgram.getEntityShader());
         Sprite sprite = Sprite.getSprite(id);
         MasterRender.renderGUI(sprite.textureID,
                 MasterRender.createTransformationMatrix(
                         x, y,
+                        scale,scale,
                         0,
                         sprite.image.getWidth(), sprite.image.getHeight(),
                         sprite.xOffset, sprite.yOffset,
                         0, 0,
-                        Manager.currentRoom.width, Manager.currentRoom.height)
+                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
         );
     }
 
@@ -55,11 +60,12 @@ public class Draw {
         MasterRender.renderGUI(text.textureID,
                 MasterRender.createTransformationMatrix(
                         x, y,
+                        1,1,
                         0,
                         text.width, text.height,
                         xOffset, yOffset,
                         0, 0,
-                        Manager.currentRoom.width, Manager.currentRoom.height)
+                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
         );
     }
 

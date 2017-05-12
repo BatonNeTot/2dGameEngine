@@ -31,8 +31,6 @@
     <xs:sequence>
       <xs:element type="xs:unsignedShort" name="width"/>
       <xs:element type="xs:unsignedShort" name="height"/>
-      <xs:element type="xs:unsignedShort" name="view_width" minOccurs="0"/>
-      <xs:element type="xs:unsignedShort" name="view_height" minOccurs="0"/>
       <xs:element ref="Entity" maxOccurs="unbounded" minOccurs="0"/>
       <xs:element ref="View" maxOccurs="16" minOccurs="0"/>
     </xs:sequence>

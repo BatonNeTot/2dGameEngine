@@ -71,7 +71,7 @@ public class Main {
 
             //init
             PyEngine.err.println("Initialization...");
-            DisplayManager.init(gameKeeper.getTitle(), gameKeeper.getIcon(), DisplayManager.WINDOWED_BORDERLESS);
+            DisplayManager.init(gameKeeper.getWidthView(), gameKeeper.getHeightView(), gameKeeper.getTitle(), gameKeeper.getIcon(), DisplayManager.WINDOWED_BORDERLESS);
             Loader.init();
             MasterRender.init();
             PyEngine.init();
@@ -96,14 +96,17 @@ public class Main {
 
             Manager.background = gameKeeper.getBackgroundID();
 
-            Room.change(gameKeeper.getRoom().get(0).getId());
+            Room.next(gameKeeper.getRoom().get(0).getId());
 
             //loop
             PyEngine.err.println("Starting main loop...");
-            Scanner in = new Scanner(System.in);
+            DisplayManager.initSize();
             while (!DisplayManager.isCloseRequested()) {
 
                 Manager.changeRoom();
+
+                if (DisplayManager.isCloseRequested())
+                    break;
 
                 PyEngine.execConsole();
 
@@ -120,14 +123,14 @@ public class Main {
                 Display.setTitle(String.format("%.2f", DisplayManager.getFPS()));
 
 
-                for (Entity entity : Manager.currentRoom.entities){
+                for (Entity entity : Manager.getCurrentRoom().entities){
                     entity.step();
                 }
 
                 //prepare vao
                 MasterRender.prepareRender();
 
-                if (Manager.currentRoom.usingViews) {
+                if (Manager.getCurrentRoom().usingViews) {
                     //render to views
                     MasterRender.renderToViews();
                     //render views

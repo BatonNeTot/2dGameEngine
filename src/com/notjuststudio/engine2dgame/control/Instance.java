@@ -6,7 +6,7 @@ package com.notjuststudio.engine2dgame.control;
 public class Instance {
 
     public static Entity create(float x, float y, String id) {
-        Entity entity = Manager.instanceCreate(x,y,id,Manager.currentRoom);
+        Entity entity = Manager.instanceCreate(x,y,id,Manager.getCurrentRoom());
         entity.init();
         return entity;
     }

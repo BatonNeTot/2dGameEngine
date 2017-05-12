@@ -18,8 +18,6 @@ public class Room {
     List<Entity> entities;
 
     boolean usingViews;
-    int viewWidth;
-    int viewHeight;
     List<View> views;
 
     String background;
@@ -42,13 +40,6 @@ public class Room {
 
         result.usingViews = tmp.isUsingViews();
 
-        if (tmp.getViewWidth() == null || tmp.getViewHeight() == null) {
-            result.viewWidth = result.width;
-            result.viewHeight = result.height;
-        } else {
-            result.viewWidth = tmp.getViewWidth();
-            result.viewHeight = tmp.getViewHeight();
-        }
         result.views = new ArrayList<>();
 
         for (com.notjuststudio.engine2dgame.xml.room.View view : tmp.getView()) {
@@ -82,21 +73,17 @@ public class Room {
 
         result.usingViews = template.usingViews;
 
-        result.viewWidth = template.viewWidth;
-        result.viewHeight = template.viewHeight;
-
         for (ViewTemplate view : template.views) {
             result.views.add(new View(view));
         }
 
         result.background = template.background;
 
-        Manager.currentRoom = result;
-        Manager.currentRoom.init();
+        Manager.roomStack.add(result);
+        result.init();
         Loader.clearFrames();
         Loader.createRoom(result);
         DisplayManager.updateDisplaySetting();
-        DisplayManager.updateDisplaySize();
     }
 
     private Room() {
@@ -173,8 +160,6 @@ public class Room {
         private List<EntityTemplate> entities;
 
         private boolean usingViews;
-        private int viewWidth;
-        private int viewHeight;
         private List<ViewTemplate> views;
 
         private String background;
@@ -195,17 +180,26 @@ public class Room {
 
 
     public static void change(String id) {
-        Manager.isChangingRoom = true;
+        Manager.changingRoomState = Manager.CHANGING;
         Manager.nextRoomId = id;
     }
 
+    public static void next(String id) {
+        Manager.changingRoomState = Manager.NEXT;
+        Manager.nextRoomId = id;
+    }
+
+    public static void previous() {
+        Manager.changingRoomState = Manager.PREVIOUS;
+    }
+
     public static int getWidth() {
-        return Manager.currentRoom.width;
+        return Manager.getCurrentRoom().width;
     }
 
 
     public static int getHeight() {
-        return Manager.currentRoom.height;
+        return Manager.getCurrentRoom().height;
     }
 
 }

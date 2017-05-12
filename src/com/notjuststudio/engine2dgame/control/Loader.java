@@ -45,6 +45,10 @@ public class Loader {
         GL20.glEnableVertexAttribArray(0);
         bindDefaultVAO();
 
+
+        frameScreenID = createFrameBuffer();
+        frameScreenTextureID = createTextureAttachment(DisplayManager.width, DisplayManager.height);
+
     }
 
     static void clear() {
@@ -52,6 +56,8 @@ public class Loader {
         GL15.glDeleteBuffers(vboID);
         textureList.forEach(GL11::glDeleteTextures);
         clearFrames();
+        GL30.glDeleteFramebuffers(frameScreenID);
+        GL11.glDeleteTextures(frameScreenTextureID);
     }
 
     private static int createVAO() {
@@ -166,8 +172,6 @@ public class Loader {
     }
 
     static void createRoom(Room room) {
-        frameScreenID = createFrameBuffer();
-        frameScreenTextureID = createTextureAttachment(room.viewWidth, room.viewHeight);
         frameRoomID = createFrameBuffer();
         frameRoomTextureID = createTextureAttachment(room.width, room.height);
         bindDefaultFrameBuffer();
@@ -209,12 +213,8 @@ public class Loader {
     }
 
     static void clearFrames(){
-        GL30.glDeleteFramebuffers(frameScreenID);
-        GL11.glDeleteTextures(frameScreenTextureID);
         GL30.glDeleteFramebuffers(frameRoomID);
         GL11.glDeleteTextures(frameRoomTextureID);
-        frameScreenID = 0;
-        frameScreenTextureID = 0;
         frameRoomID = 0;
         frameRoomTextureID = 0;
     }

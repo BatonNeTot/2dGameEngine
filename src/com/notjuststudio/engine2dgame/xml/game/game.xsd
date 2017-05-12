@@ -18,5 +18,7 @@
     <xs:attribute type="xs:string" name="title" default="Game"/>
     <xs:attribute type="xs:string" name="icon"/>
     <xs:attribute type="xs:ID" name="backgroundID"/>
+    <xs:attribute type="xs:unsignedShort" name="widthView" use="required"/>
+    <xs:attribute type="xs:unsignedShort" name="heightView" use="required"/>
   </xs:complexType>
 </xs:schema>

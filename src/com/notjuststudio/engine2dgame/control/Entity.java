@@ -94,7 +94,7 @@ public class Entity implements Comparable<Entity>{
 
     public static void destroy(Entity target) {
         ((Entity.Methods) target)._destroy_();
-        Manager.currentRoom.entities.remove(target);
+        Manager.getCurrentRoom().entities.remove(target);
     }
 
     public float getX() {

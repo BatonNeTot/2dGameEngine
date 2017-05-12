@@ -23,6 +23,9 @@ public class DisplayManager {
     private static int maxCountOfDelta = 100;
     private static List<Float> listOfDelta = new ArrayList<>(maxCountOfDelta);
 
+    static int width;
+    static int height;
+
     private static long lastFrameTime;
     private static float delta;
 
@@ -55,7 +58,11 @@ public class DisplayManager {
         format = new PixelFormat().withSamples(4);
     }
 
-    static void init(String title, String icon, int state) {
+    static void init(int width, int height, String title, String icon, int state) {
+
+        DisplayManager.width = width;
+        DisplayManager.height = height;
+
         ByteBuffer[] icons = new ByteBuffer[2];
         if (icon != null) {
             BufferedImage image = ImageLoader.loadImage(new File(icon));
@@ -111,6 +118,12 @@ public class DisplayManager {
 
     static void closeRequest() {
         closeRequest = true;
+    }
+
+    static void initSize() {
+        if (Display.getDisplayMode().getWidth() == 0 || Display.getDisplayMode().getHeight() == 0){
+            updateDisplaySize();
+        }
     }
 
     static void setSize(int width, int height) {
@@ -173,15 +186,24 @@ public class DisplayManager {
                 e.printStackTrace();
             }
         }
-        currentSetting = newSetting;
-        newSetting = new Setting();
+        currentSetting = newSetting.clone();
     }
 
     static void updateDisplaySize() {
-        DisplayManager.setSize(Manager.currentRoom.viewWidth, Manager.currentRoom.viewHeight);
+        DisplayManager.setSize(DisplayManager.width, DisplayManager.height);
     }
 
-    private static class Setting {
+    private static class Setting implements Cloneable {
         private int fullscreenState = WINDOWED;
+
+        @Override
+        protected Setting clone() {
+            try {
+                return (Setting)super.clone();
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+                return new Setting();
+            }
+        }
     }
 }
