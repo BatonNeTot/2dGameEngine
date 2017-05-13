@@ -38,4 +38,8 @@ public class Game {
         DisplayManager.closeRequest();
     }
 
+    public static float getDelta() {
+        return DisplayManager.delta;
+    }
+
 }

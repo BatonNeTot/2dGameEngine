@@ -17,6 +17,10 @@ class MasterRender {
 
     static ShaderProgram currentShader;
 
+    static int frameID = 0;
+    static int width;
+    static int height;
+
     static void init() {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -36,7 +40,7 @@ class MasterRender {
 
     static void renderViews(){
         List<Room.View> views = Manager.getCurrentRoom().views;
-        Loader.bindFrameBuffer(Loader.getFrameScreenID(), DisplayManager.width, DisplayManager.height);
+        bindFrameBuffer(Loader.getFrameScreenID(), DisplayManager.width, DisplayManager.height);
         clearScreen(0f,0.5f,0f,1f);
         setShader(ShaderProgram.getViewShader());
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
@@ -55,7 +59,7 @@ class MasterRender {
     }
 
     private static void renderRoom(int target, int width, int height) {
-        Loader.bindFrameBuffer(target, width, height);
+        bindFrameBuffer(target, width, height);
         clearScreen(0.5f,0f,0f,1f);
         if (Manager.getCurrentRoom().background != null) {
             setShader(ShaderProgram.getBackgroundShader());
@@ -74,11 +78,10 @@ class MasterRender {
         Manager.getCurrentRoom().entities.sort(Entity::compareTo);
         Draw.isDraw = true;
         for (Entity entity : Manager.getCurrentRoom().entities) {
-            if (!entity.isVisible()) continue;
-            if (!entity.hasDraw) {
-                if (entity.sprite == null) continue;
-                renderGUI(Sprite.getSprite(entity.sprite).textureID, createTransformationMatrix(entity));
-            } else {
+            if (entity.isVisible())
+                if (entity.sprite != null)
+                    renderGUI(entity.sprite.textureID, createTransformationMatrix(entity));
+            if (entity.hasDraw) {
                 entity.draw();
                 setShader(ShaderProgram.getEntityShader());
             }
@@ -87,7 +90,7 @@ class MasterRender {
     }
 
     static void renderPostEffect() {
-        Loader.bindDefaultFrameBuffer();
+        bindDefaultFrameBuffer();
         clearScreen(0f,0f,0.5f,1f);
         if (Manager.background != null) {
             setShader(ShaderProgram.getBackgroundShader());
@@ -106,7 +109,7 @@ class MasterRender {
     }
 
     static void renderText(Text text, List<Text.Char> characters, int frame, int width, int height) {
-        Loader.bindFrameBuffer(frame, width, height);
+        bindFrameBuffer(frame, width, height);
         clearScreen(0f,0f,0f,0f);
         setShader(ShaderProgram.getPartShader());
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
@@ -127,7 +130,7 @@ class MasterRender {
         }
     }
 
-    private static void clearScreen(float red, float green, float blue, float alpha) {
+    static void clearScreen(float red, float green, float blue, float alpha) {
         GL11.glClearColor(red, green, blue, alpha);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
     }
@@ -156,14 +159,27 @@ class MasterRender {
         Loader.bindDefaultVAO();
     }
 
+    static void bindFrameBuffer(int id, int width, int height) {
+        Loader.bindFrameBuffer(id, width, height);
+        MasterRender.frameID = id;
+        MasterRender.width = width;
+        MasterRender.height = height;
+    }
+
+    static void bindDefaultFrameBuffer() {
+        Loader.bindDefaultFrameBuffer();
+        MasterRender.frameID = 0;
+        MasterRender.width = DisplayManager.width;
+        MasterRender.height = DisplayManager.height;
+    }
+
     private static Matrix3f createTransformationMatrix(Entity entity) {
-        Sprite sprite = Sprite.getSprite(entity.sprite);
         return createTransformationMatrix(
                 entity.getX(), entity.getY(),
                 1,1,
                 entity.getSprite_angle(),
-                sprite.image.getWidth(), sprite.image.getHeight(),
-                sprite.xOffset, sprite.yOffset,
+                entity.sprite.image.getWidth(), entity.sprite.image.getHeight(),
+                entity.sprite.xOffset, entity.sprite.yOffset,
                 0, 0,
                 Manager.getCurrentRoom().width, Manager.getCurrentRoom().height
         );

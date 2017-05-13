@@ -86,6 +86,10 @@ public class Room {
         DisplayManager.updateDisplaySetting();
     }
 
+    void clear() {
+        entities.clear();
+    }
+
     private Room() {
         this.views = new ArrayList<>();
         this.entities = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.notjuststudio.engine2dgame.control;
 import com.notjuststudio.engine2dgame.util.Parser;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,11 +11,12 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by George on 09.05.2017.
  */
-public class Text {
+public class Text implements Draw.Drawable{
 
     private static List<Text> texts = new ArrayList<>();
 
@@ -144,16 +146,19 @@ public class Text {
     }
 
     void update() {
+        int target = MasterRender.frameID;
+        int width = MasterRender.width;
+        int height = MasterRender.height;
+
         GL11.glDeleteTextures(textureID);
         int id = Loader.createFrameBuffer();
         setWidth();
         setHeight();
-        textureID = Loader.createTextureAttachment(width, height);
-        Loader.bindDefaultFrameBuffer();
-        MasterRender.prepareRender();
+        textureID = Loader.createTextureAttachment(this.width, this.height);
+//        MasterRender.prepareRender();
         List<Char> characters = new ArrayList<>();
         int xCursor = 0;
-        int yCursor = height - (int) Math.floor((float) size  * 9 / 8);
+        int yCursor = this.height - (int) Math.floor((float) size  * 9 / 8);
 
         String[] lines = format();
         for (String line : lines) {
@@ -162,10 +167,10 @@ public class Text {
                     xCursor = 0;
                     break;
                 case CENTER:
-                    xCursor = (width - this.getLineWidth(line)) / 2;
+                    xCursor = (this.width - this.getLineWidth(line)) / 2;
                     break;
                 case RIGHT:
-                    xCursor = width - this.getLineWidth(line);
+                    xCursor = this.width - this.getLineWidth(line);
                     break;
             }
             for (char symbol : line.toCharArray()) {
@@ -179,14 +184,58 @@ public class Text {
             yCursor -= this.size * 9 / 8;
         }
 
-        MasterRender.renderText(this, characters, id, width, height);
-        MasterRender.closeRender();
+        MasterRender.renderText(this, characters, id, this.width, this.height);
+
+        MasterRender.bindFrameBuffer(target, width, height);
+//        MasterRender.closeRender();
         GL30.glDeleteFramebuffers(id);
 
-        BufferedImage image = Loader.loadImageFromTexture(textureID);
-        image = image;
-
         needToUpdate = false;
+    }
+
+    @Override
+    public void draw(Map<String, Float> parameters) {
+        if (!Draw.isDraw) return;
+        float x = parameters.getOrDefault("x", 0f);
+        float y = parameters.getOrDefault("y", 0f);
+        this.setSize((int)Math.floor(parameters.getOrDefault("size", (float)this.size)));
+
+        if (this.needToUpdate) this.update();
+        MasterRender.setShader(ShaderProgram.getTextShader());
+        MasterRender.currentShader.loadUniformLocation("color",new Vector4f(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.color.getAlpha()));
+        int xOffset = 0, yOffset = 0;
+        switch (this.getAlignH()) {
+            case Text.LEFT:
+                xOffset = 0;
+                break;
+            case Text.CENTER:
+                xOffset = this.getWidth() / 2;
+                break;
+            case Text.RIGHT:
+                xOffset = this.getWidth();
+                break;
+        }
+        switch (this.getAlignV()) {
+            case Text.TOP:
+                yOffset = this.getHeight();
+                break;
+            case Text.CENTER:
+                yOffset = (this.getHeight()) / 2;
+                break;
+            case Text.BOTTOM:
+                yOffset = (int) Math.floor((float) this.size / 8);
+                break;
+        }
+        MasterRender.renderGUI(this.textureID,
+                MasterRender.createTransformationMatrix(
+                        x, y,
+                        1,1,
+                        0,
+                        this.width, this.height,
+                        xOffset, yOffset,
+                        0, 0,
+                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
+        );
     }
 
     class Char {

@@ -27,7 +27,7 @@ public class DisplayManager {
     static int height;
 
     private static long lastFrameTime;
-    private static float delta;
+    static float delta;
 
     private static boolean closeRequest = false;
     private static final ContextAttribs attribs;
@@ -128,8 +128,8 @@ public class DisplayManager {
 
     static void setSize(int width, int height) {
         try {
-            Display.setDisplayMode(new DisplayMode(width, height));
             GL11.glViewport(0, 0, width, height);
+            Display.setDisplayMode(new DisplayMode(width, height));
         } catch (LWJGLException e) {
             e.printStackTrace();
         }
@@ -137,11 +137,7 @@ public class DisplayManager {
 
     public static float getFPS() {
         if (listOfDelta.isEmpty()) return 0;
-        return countOfDelta/((float)listOfDelta.stream().mapToDouble(Float::floatValue).sum());
-    }
-
-    public static float getFrameTimeSeconds() {
-        return delta;
+        return countOfDelta / ((float) listOfDelta.stream().mapToDouble(Float::floatValue).sum());
     }
 
     public static long getCurrentTime() {

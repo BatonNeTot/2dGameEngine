@@ -39,6 +39,7 @@ public class PyEngine {
         loadClasses(Main.class);
         exec("import math");
         exec("from java.awt import Color");
+        exec("from java.lang import Float");
         exec("exit = quit = Game.closeRequest");
 
         exec("class __objs__(object):\n" +

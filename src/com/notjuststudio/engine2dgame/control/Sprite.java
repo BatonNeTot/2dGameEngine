@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Created by Georgy on 03.04.2017.
  */
-public class Sprite {
+public class Sprite implements Draw.Drawable{
 
     private static Map<String, Sprite> spriteMap = new HashMap<>();
 
@@ -53,8 +53,29 @@ public class Sprite {
         spriteMap.put(id, new Sprite(filePath));
     }
 
-    static Sprite getSprite(String id) {
+    public static Sprite getSprite(String id) {
         return spriteMap.get(id);
     }
 
+    @Override
+    public void draw(Map<String, Float> parameters) {
+        if (!Draw.isDraw) return;
+
+        float x = parameters.getOrDefault("x", 0f);
+        float y = parameters.getOrDefault("y", 0f);
+        float xScale = parameters.getOrDefault("xScale", 1f);
+        float yScale = parameters.getOrDefault("yScale", 1f);
+
+        MasterRender.setShader(ShaderProgram.getEntityShader());
+        MasterRender.renderGUI(this.textureID,
+                MasterRender.createTransformationMatrix(
+                        x, y,
+                        xScale, yScale,
+                        0,
+                        this.image.getWidth(), this.image.getHeight(),
+                        this.xOffset, this.yOffset,
+                        0, 0,
+                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
+        );
+    }
 }

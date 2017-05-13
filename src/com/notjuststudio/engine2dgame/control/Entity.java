@@ -19,7 +19,7 @@ public class Entity implements Comparable<Entity>{
     boolean isInit = false;
     boolean hasDraw = false;
 
-    String sprite = null;
+    Sprite sprite = null;
     private boolean visible = true;
 
     private float depth = 0;
@@ -40,7 +40,7 @@ public class Entity implements Comparable<Entity>{
         }
 
         result.hasDraw = template.hasDraw;
-        result.sprite = template.sprite;
+        result.sprite = Sprite.getSprite(template.sprite);
         result.depth = template.depth;
         result.visible = template.visible;
         result.x = x;
@@ -149,5 +149,9 @@ public class Entity implements Comparable<Entity>{
         if (depth == o.depth)
             return 0;
         return depth > o.depth ? 1 : -1;
+    }
+
+    public Sprite getSprite() {
+        return sprite;
     }
 }

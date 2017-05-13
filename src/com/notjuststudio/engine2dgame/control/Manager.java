@@ -41,14 +41,14 @@ public class Manager {
             case NOT_CHANGING:
                 return;
             case CHANGING:
-                roomStack.remove();
+                roomStack.remove().clear();
                 Room.setCurrentRoom(nextRoomId);
                 break;
             case NEXT:
                 Room.setCurrentRoom(nextRoomId);
                 break;
             case PREVIOUS:
-                roomStack.remove();
+                roomStack.remove().clear();
                 if (roomStack.peek() == null)
                     DisplayManager.closeRequest();
                 break;

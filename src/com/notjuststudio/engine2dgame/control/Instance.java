@@ -12,14 +12,13 @@ public class Instance {
     }
 
     public static boolean isInInstance(float x, float y, Entity entity) {
-        Sprite sprite = Sprite.getSprite(entity.sprite);
         if (
-                x >= entity.getX() - sprite.xOffset && x <= entity.getX() - sprite.xOffset + sprite.image.getWidth() &&
-                        y >= entity.getY() - sprite.yOffset && y <= entity.getY() - sprite.yOffset + sprite.image.getHeight()) {
-            if (sprite.isAccurateCollusionCheck) {
-                x -= entity.getX() - sprite.xOffset;
-                y -= entity.getY() - sprite.yOffset;
-                return ((sprite.image.getRGB((int)x, (int)y)>>>24) > 2);
+                x >= entity.getX() - entity.sprite.xOffset && x <= entity.getX() - entity.sprite.xOffset + entity.sprite.image.getWidth() &&
+                        y >= entity.getY() - entity.sprite.yOffset && y <= entity.getY() - entity.sprite.yOffset + entity.sprite.image.getHeight()) {
+            if (entity.sprite.isAccurateCollusionCheck) {
+                x -= entity.getX() - entity.sprite.xOffset;
+                y -= entity.getY() - entity.sprite.yOffset;
+                return ((entity.sprite.image.getRGB((int)x, (int)y)>>>24) > 2);
             } else {
                 return true;
             }
