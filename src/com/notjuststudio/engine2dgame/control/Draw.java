@@ -29,6 +29,10 @@ public class Draw {
         sprite(x,y,scale, Sprite.getSprite(id));
     }
 
+    public static void sprite(float x, float y, Sprite sprite) {
+        sprite(x,y,1,sprite);
+    }
+
     public static void sprite(float x, float y, float scale, Sprite sprite) {
         if (!isDraw) return;
         Map<String, Float> parameters = new HashMap<>();
@@ -36,7 +40,7 @@ public class Draw {
         parameters.put("y", y);
         parameters.put("xScale", scale);
         parameters.put("yScale", scale);
-        ((Drawable)sprite).draw(parameters);
+        sprite.draw(parameters);
     }
 
     public static void text(float x, float y, Text text) {
@@ -44,7 +48,7 @@ public class Draw {
         Map<String, Float> parameters = new HashMap<>();
         parameters.put("x", x);
         parameters.put("y", y);
-        ((Drawable)text).draw(parameters);
+        text.draw(parameters);
     }
 
     static interface Drawable{

@@ -5,8 +5,14 @@ package com.notjuststudio.engine2dgame.control;
  */
 public class Instance {
 
+    static Entity instanceCreate(float x, float y, String id, Room room) {
+        Entity result = Entity.createEntity(x, y, id);
+        room.entities.add(result);
+        return result;
+    }
+
     public static Entity create(float x, float y, String id) {
-        Entity entity = Manager.instanceCreate(x,y,id,Manager.getCurrentRoom());
+        Entity entity = instanceCreate(x,y,id, Room.getCurrentRoom());
         entity.init();
         return entity;
     }

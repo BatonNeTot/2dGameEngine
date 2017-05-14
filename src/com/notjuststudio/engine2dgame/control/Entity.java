@@ -4,6 +4,8 @@ import com.notjuststudio.engine2dgame.util.Parser;
 import com.notjuststudio.engine2dgame.xml.ent.ObjectFactory;
 import org.python.core.PyCode;
 import org.python.core.PyException;
+import org.python.core.PyNone;
+import org.python.core.PyString;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,7 +19,6 @@ public class Entity implements Comparable<Entity>{
     private static Map<String, EntityTemplate> templateMap = new HashMap<>();
 
     boolean isInit = false;
-    boolean hasDraw = false;
 
     Sprite sprite = null;
     private boolean visible = true;
@@ -27,6 +28,35 @@ public class Entity implements Comparable<Entity>{
     private float x = 0;
     private float y = 0;
     private float sprite_angle = 0;
+
+    public Entity() {}
+
+    public static Entity createEntity(PyString init, PyString step, PyString draw, PyString destroy) {
+        return createEntity(init == null ? null : init.toString(),step == null ? null : step.toString(),draw == null ? null : draw.toString(),destroy == null ? null : destroy.toString());
+    }
+
+    static Entity createEntity(String init, String step, String draw, String destroy) {
+        PyEngine.exec("class __tmp__(Entity, Entity.Methods):\n" +
+                "  def _init_(self):\n" +
+                (init == null ? "    pass" : Parser.stringParser(init, 4)) + "\n" +
+                "  def _step_(self):\n" +
+                (step == null ? "    pass" : Parser.stringParser(step, 4)) + "\n" +
+                "  def _draw_(self):\n" +
+                (draw == null ? "    pass" : Parser.stringParser(draw, 4)) + "\n" +
+                "  def _destroy_(self):\n" +
+                (destroy == null ? "    pass" : Parser.stringParser(destroy, 4)) + "\n" +
+                "__obj__ = __tmp__()\n" +
+                "del __tmp__");
+
+        Entity result = PyEngine.get("__obj__", Entity.class);
+        try {
+            PyEngine.exec("del __obj__");
+        } catch (PyException e) {
+            PyEngine.err.println("Can't delete __obj__");
+        }
+
+        return result;
+    }
 
     static Entity createEntity(float x, float y, String id) {
         EntityTemplate template = templateMap.get(id);
@@ -39,7 +69,6 @@ public class Entity implements Comparable<Entity>{
             PyEngine.err.println("Can't delete __obj__");
         }
 
-        result.hasDraw = template.hasDraw;
         result.sprite = Sprite.getSprite(template.sprite);
         result.depth = template.depth;
         result.visible = template.visible;
@@ -65,7 +94,6 @@ public class Entity implements Comparable<Entity>{
                 (tmp.getEventDestroy() == null ? "    pass" : Parser.stringParser(tmp.getEventDestroy(), 4)) + "\n" +
                 "__obj__ = __tmp__()\n" +
                 "del __tmp__");
-        template.hasDraw = tmp.getEventDraw() != null;
         template.sprite = tmp.getSprite();
         template.visible = tmp.isVisible();
         template.depth = tmp.getDepth();
@@ -94,7 +122,7 @@ public class Entity implements Comparable<Entity>{
 
     public static void destroy(Entity target) {
         ((Entity.Methods) target)._destroy_();
-        Manager.getCurrentRoom().entities.remove(target);
+        Room.getCurrentRoom().entities.remove(target);
     }
 
     public float getX() {
@@ -137,7 +165,6 @@ public class Entity implements Comparable<Entity>{
     }
 
     private static class EntityTemplate {
-        boolean hasDraw;
         PyCode code;
         String sprite;
         boolean visible;
@@ -153,5 +180,17 @@ public class Entity implements Comparable<Entity>{
 
     public Sprite getSprite() {
         return sprite;
+    }
+
+    public void setSprite(Sprite sprite) {
+        this.sprite = sprite;
+    }
+
+    public float getDepth() {
+        return depth;
+    }
+
+    public void setDepth(float depth) {
+        this.depth = depth;
     }
 }

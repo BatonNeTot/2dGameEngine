@@ -9,9 +9,13 @@ import java.io.IOException;
  */
 public class Game {
 
+    static String SCREENSHOT_NAME = "Screenshot";
+
+    static String background;
+
     public static void takeScreenshot() {
         for (int i = 1;;i++) {
-            File file = new File(Manager.SCREENSHOT_NAME + "_" + i + ".png");
+            File file = new File(SCREENSHOT_NAME + "_" + i + ".png");
             if (file.exists())
                 continue;
             try {
@@ -36,10 +40,6 @@ public class Game {
 
     public static void closeRequest() {
         DisplayManager.closeRequest();
-    }
-
-    public static float getDelta() {
-        return DisplayManager.delta;
     }
 
 }

@@ -8,6 +8,7 @@ import org.lwjgl.util.vector.Vector2f;
 import com.notjuststudio.engine2dgame.util.MathUtil;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,26 +30,46 @@ class MasterRender {
         GL11.glDisable(GL11.GL_DEPTH_TEST);
     }
 
+    static void render(int target, int width, int height) {
+        //prepare vao
+        MasterRender.prepareRender();
+
+        if (Room.getCurrentRoom().usingViews) {
+            //render to views
+            MasterRender.renderToViews();
+            //render views
+            MasterRender.renderViews();
+        }
+        else {
+            //render entity
+            MasterRender.renderRoom();
+        }
+        //render room
+        MasterRender.renderPostEffect(target, width, height);
+        //render unbind
+        MasterRender.closeRender();
+    }
+
     static void prepareRender() {
         Loader.bindVao(Loader.getVaoID());
     }
 
     static void renderToViews() {
-        renderRoom(Loader.getFrameRoomID(), Manager.getCurrentRoom().width, Manager.getCurrentRoom().height);
+        renderRoom(Loader.getFrameRoomID(), Room.getCurrentRoom().width, Room.getCurrentRoom().height);
     }
 
 
     static void renderViews(){
-        List<Room.View> views = Manager.getCurrentRoom().views;
+        List<Room.View> views = Room.getCurrentRoom().views;
         bindFrameBuffer(Loader.getFrameScreenID(), DisplayManager.width, DisplayManager.height);
         clearScreen(0f,0.5f,0f,1f);
         setShader(ShaderProgram.getViewShader());
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Loader.getFrameRoomTextureID());
         for (Room.View view : views) {
-            currentShader.loadUniformLocation("transformationMatrix", createTransformationMatrix(view));
-            currentShader.loadUniformLocation("point", new Vector2f(view.x / Manager.getCurrentRoom().width, view.y / Manager.getCurrentRoom().height));
-            currentShader.loadUniformLocation("size", new Vector2f((float)view.width / Manager.getCurrentRoom().width, (float)view.height / Manager.getCurrentRoom().height));
+            currentShader.loadUniform("transformationMatrix", createTransformationMatrix(view));
+            currentShader.loadUniform("point", new Vector2f(view.x / Room.getCurrentRoom().width, view.y / Room.getCurrentRoom().height));
+            currentShader.loadUniform("size", new Vector2f((float)view.width / Room.getCurrentRoom().width, (float)view.height / Room.getCurrentRoom().height));
             GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
         }
     }
@@ -60,46 +81,72 @@ class MasterRender {
 
     private static void renderRoom(int target, int width, int height) {
         bindFrameBuffer(target, width, height);
-        clearScreen(0.5f,0f,0f,1f);
-        if (Manager.getCurrentRoom().background != null) {
+        clearScreen(0f,0f,0f,1f);
+        if (Room.getCurrentRoom().background != null) {
             setShader(ShaderProgram.getBackgroundShader());
-            Background back = Background.getBackground(Manager.getCurrentRoom().background);
+            Background back = Background.getBackground(Room.getCurrentRoom().background);
             float xScale, yScale;
             if (back.stretched) {
                 xScale = 1;
                 yScale = 1;
             } else {
-                xScale = Manager.getCurrentRoom().width / (float)back.image.getWidth();
-                yScale = Manager.getCurrentRoom().height / (float)back.image.getHeight();
+                xScale = Room.getCurrentRoom().width / (float)back.image.getWidth();
+                yScale = Room.getCurrentRoom().height / (float)back.image.getHeight();
             }
             renderBackground(back.textureID, new Vector2f(xScale, yScale));
         }
         setShader(ShaderProgram.getEntityShader());
-        Manager.getCurrentRoom().entities.sort(Entity::compareTo);
+        Room.getCurrentRoom().entities.sort(Entity::compareTo);
         Draw.isDraw = true;
-        for (Entity entity : Manager.getCurrentRoom().entities) {
-            if (entity.isVisible())
-                if (entity.sprite != null)
-                    renderGUI(entity.sprite.textureID, createTransformationMatrix(entity));
-            if (entity.hasDraw) {
-                entity.draw();
-                setShader(ShaderProgram.getEntityShader());
-            }
+        for (Entity entity : Room.getCurrentRoom().entities) {
+            if (entity.isVisible() && entity.sprite != null)
+                renderGUI(entity.sprite.textureID, createTransformationMatrix(entity));
+            entity.draw();
+            setShader(ShaderProgram.getEntityShader());
         }
         Draw.isDraw = false;
     }
 
-    static void renderPostEffect() {
-        bindDefaultFrameBuffer();
+    static void renderPostEffect(int target, int width, int height) {
+        bindFrameBuffer(target, width, height);
         clearScreen(0f,0f,0.5f,1f);
-        if (Manager.background != null) {
+        if (Game.background != null) {
             setShader(ShaderProgram.getBackgroundShader());
-            Background back = Background.getBackground(Manager.background);
+            Background back = Background.getBackground(Game.background);
             renderBackground(back.textureID, new Vector2f(Display.getWidth() / (float)back.image.getWidth(), Display.getHeight() / (float)back.image.getHeight()));
         }
         setShader(ShaderProgram.getRoomShader());
         float scale = (Display.getWidth()/(float)Display.getHeight())/(DisplayManager.width/(float)DisplayManager.height);
-        currentShader.loadUniformLocation("transformationMatrix", MathUtil.createScaleMatrix(new Vector2f(
+        currentShader.loadUniform("transformationMatrix", MathUtil.createScaleMatrix(new Vector2f(
+                scale < 1 ? 1 : 1/scale,
+                scale < 1 ? scale : 1
+        )));
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, Loader.getFrameScreenTextureID());
+        GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    static void renderRoomAnimation() {
+        bindFrameBuffer(Loader.getFrameScreenID(), Display.getWidth(), Display.getHeight());
+        Draw.isDraw = true;
+        List<Entity> list = new ArrayList<>();
+        list.add(Room.previousRoomAnimation.entity);
+        list.add(Room.nextRoomAnimation.entity);
+        list.sort(Entity::compareTo);
+        for (Entity entity : list) {
+            ((Entity.Methods)entity)._draw_();
+        }
+        Draw.isDraw = false;
+        bindFrameBuffer(0, Display.getWidth(), Display.getHeight());
+        clearScreen(0f,0f,0f,1f);
+        if (Game.background != null) {
+            setShader(ShaderProgram.getBackgroundShader());
+            Background back = Background.getBackground(Game.background);
+            renderBackground(back.textureID, new Vector2f(Display.getWidth() / (float)back.image.getWidth(), Display.getHeight() / (float)back.image.getHeight()));
+        }
+        setShader(ShaderProgram.getUpsideDownPartShader());
+        float scale = (Display.getWidth()/(float)Display.getHeight())/(DisplayManager.width/(float)DisplayManager.height);
+        currentShader.loadUniform("transformationMatrix", MathUtil.createScaleMatrix(new Vector2f(
                 scale < 1 ? 1 : 1/scale,
                 scale < 1 ? scale : 1
         )));
@@ -115,13 +162,13 @@ class MasterRender {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, text.font.textureID);
         for (Text.Char character : characters) {
-            currentShader.loadUniformLocation("transformationMatrix", createTransformationMatrix(character, text, width, height));
-            currentShader.loadUniformLocation("point",
+            currentShader.loadUniform("transformationMatrix", createTransformationMatrix(character, text, width, height));
+            currentShader.loadUniform("point",
                     new Vector2f(
                             (float)text.font.getCharacter(character.id).x / text.font.source.getWidth(),
                             (float)text.font.getCharacter(character.id).y / text.font.source.getHeight()
                     ));
-            currentShader.loadUniformLocation("size",
+            currentShader.loadUniform("size",
                     new Vector2f(
                             (float)text.font.getCharacter(character.id).width / text.font.source.getWidth(),
                             (float)text.font.getCharacter(character.id).height / text.font.source.getHeight()
@@ -141,14 +188,14 @@ class MasterRender {
     }
 
     private static void renderBackground(int ID, Vector2f scale) {
-        currentShader.loadUniformLocation("scale", scale);
+        currentShader.loadUniform("scale", scale);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, ID);
         GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
     }
 
     static void renderGUI(int ID, Matrix3f transformationMatrix) {
-        currentShader.loadUniformLocation("transformationMatrix", transformationMatrix);
+        currentShader.loadUniform("transformationMatrix", transformationMatrix);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, ID);
         GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
@@ -166,13 +213,6 @@ class MasterRender {
         MasterRender.height = height;
     }
 
-    static void bindDefaultFrameBuffer() {
-        Loader.bindDefaultFrameBuffer();
-        MasterRender.frameID = 0;
-        MasterRender.width = DisplayManager.width;
-        MasterRender.height = DisplayManager.height;
-    }
-
     private static Matrix3f createTransformationMatrix(Entity entity) {
         return createTransformationMatrix(
                 entity.getX(), entity.getY(),
@@ -181,7 +221,7 @@ class MasterRender {
                 entity.sprite.image.getWidth(), entity.sprite.image.getHeight(),
                 entity.sprite.xOffset, entity.sprite.yOffset,
                 0, 0,
-                Manager.getCurrentRoom().width, Manager.getCurrentRoom().height
+                Room.getCurrentRoom().width, Room.getCurrentRoom().height
         );
     }
 

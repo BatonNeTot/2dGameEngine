@@ -69,6 +69,10 @@ public class PyEngine {
         return pyInterpreter.get(name);
     }
 
+    static void put(String name, Object value) {
+        pyInterpreter.set(name, value);
+    }
+
     static <T> T get(String name, Class<T> javaClass) {
         return pyInterpreter.get(name, javaClass);
     }

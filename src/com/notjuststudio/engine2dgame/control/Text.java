@@ -1,13 +1,10 @@
 package com.notjuststudio.engine2dgame.control;
 
-import com.notjuststudio.engine2dgame.util.Parser;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -202,7 +199,7 @@ public class Text implements Draw.Drawable{
 
         if (this.needToUpdate) this.update();
         MasterRender.setShader(ShaderProgram.getTextShader());
-        MasterRender.currentShader.loadUniformLocation("color",new Vector4f(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.color.getAlpha()));
+        MasterRender.currentShader.loadUniform("color",new Vector4f(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.color.getAlpha()));
         int xOffset = 0, yOffset = 0;
         switch (this.getAlignH()) {
             case Text.LEFT:
@@ -234,7 +231,7 @@ public class Text implements Draw.Drawable{
                         this.width, this.height,
                         xOffset, yOffset,
                         0, 0,
-                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
+                        Room.getCurrentRoom().width, Room.getCurrentRoom().height)
         );
     }
 

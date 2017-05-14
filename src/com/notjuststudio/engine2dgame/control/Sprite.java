@@ -18,19 +18,24 @@ public class Sprite implements Draw.Drawable{
 
     private static Map<String, Sprite> spriteMap = new HashMap<>();
 
-    int xOffset;
-    int yOffset;
+    int xOffset = 0;
+    int yOffset = 0;
 
-    boolean isAccurateCollusionCheck;
+    boolean isFlipped = false;
+
+    boolean isAccurateCollusionCheck = false;
 
     BufferedImage image;
     int textureID;
 
     Sprite(BufferedImage image) {
         textureID = Loader.loadTexture(image, GL14.GL_MIRRORED_REPEAT);
+        this.image = image;
+    }
 
-        xOffset = 0;
-        yOffset = 0;
+    Sprite(int textureID) {
+        this.textureID = textureID;
+        image = Loader.loadImageFromTexture(textureID);
     }
 
     private Sprite(String filePath) {
@@ -65,8 +70,11 @@ public class Sprite implements Draw.Drawable{
         float y = parameters.getOrDefault("y", 0f);
         float xScale = parameters.getOrDefault("xScale", 1f);
         float yScale = parameters.getOrDefault("yScale", 1f);
+        float alpha = parameters.getOrDefault("alpha", 1f);
 
-        MasterRender.setShader(ShaderProgram.getEntityShader());
+        MasterRender.setShader(ShaderProgram.getSpriteShader());
+        MasterRender.currentShader.loadUniform("alpha", alpha);
+        MasterRender.currentShader.loadUniform("isFlipped", isFlipped);
         MasterRender.renderGUI(this.textureID,
                 MasterRender.createTransformationMatrix(
                         x, y,
@@ -75,7 +83,15 @@ public class Sprite implements Draw.Drawable{
                         this.image.getWidth(), this.image.getHeight(),
                         this.xOffset, this.yOffset,
                         0, 0,
-                        Manager.getCurrentRoom().width, Manager.getCurrentRoom().height)
+                        Room.getCurrentRoom().width, Room.getCurrentRoom().height)
         );
+    }
+
+    public int getWidth() {
+        return image.getWidth();
+    }
+
+    public int getHeight() {
+        return image.getHeight();
     }
 }

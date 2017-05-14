@@ -1,12 +1,10 @@
 package com.notjuststudio.engine2dgame.control;
 
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.game.Game;
 import com.notjuststudio.engine2dgame.xml.game.Source;
 import org.lwjgl.opengl.Display;
 
 import java.io.*;
-import java.util.*;
 
 
 /**
@@ -20,7 +18,9 @@ public class Main {
                 System.err.println("No arguments");
                 System.exit(1);
             }
-            Game gameKeeper = Parser.loadXml(args[0], com.notjuststudio.engine2dgame.xml.game.ObjectFactory.class, Game.class);
+            com.notjuststudio.engine2dgame.xml.game.Game gameKeeper =
+                    Parser.loadXml(args[0], com.notjuststudio.engine2dgame.xml.game.ObjectFactory.class,
+                            com.notjuststudio.engine2dgame.xml.game.Game.class);
 
             if (gameKeeper == null) {
                 System.err.println("Can't load main game file");
@@ -94,56 +94,53 @@ public class Main {
                 Room.loadRoom(room.getId(), room.getSource());
             }
 
-            Manager.background = gameKeeper.getBackgroundID();
+            Game.background = gameKeeper.getBackgroundID();
 
             Room.next(gameKeeper.getRoom().get(0).getId());
 
             //loop
             PyEngine.err.println("Starting main loop...");
-            DisplayManager.initSize();
+            DisplayManager.initLoop();
             while (!DisplayManager.isCloseRequested()) {
 
-                Manager.changeRoom();
+                Room.changeRoom();
 
                 if (DisplayManager.isCloseRequested())
                     break;
 
-                PyEngine.execConsole();
+                if (Room.isChanging) {
+                    Room.time += DisplayManager.getDelta();
+                    if (Room.time >= Room.endTime) {
+                        Room.time = 0;
+                        Room.isChanging = false;
+                        continue;
+                    }
+                    Room.previousRoomAnimation.step(DisplayManager.getDelta());
+                    Room.nextRoomAnimation.step(DisplayManager.getDelta());
 
-                InputManager.update();
+                    MasterRender.prepareRender();
+                    MasterRender.renderRoomAnimation();
+                    MasterRender.closeRender();
+                } else {
 
-                if (InputManager.isKeyTouched(InputManager.KEY_F11))
-                    com.notjuststudio.engine2dgame.control.Game.takeScreenshot();
-                if (InputManager.isKeyTouched(InputManager.KEY_F4)) {
-                    DisplayManager.setFullscreenState(DisplayManager.getFullscreenState() == 1 ? 0 : DisplayManager.getFullscreenState() + 1);
-                    DisplayManager.updateDisplaySetting();
+                    PyEngine.execConsole();
+
+                    InputManager.update();
+
+                    if (InputManager.isKeyTouched(InputManager.KEY_F11)) {
+                        Game.takeScreenshot();
+                    }
+                    if (InputManager.isKeyTouched(InputManager.KEY_F4)) {
+                        DisplayManager.setFullscreenState(DisplayManager.getFullscreenState() == 1 ? 0 : DisplayManager.getFullscreenState() + 1);
+                        DisplayManager.updateDisplaySetting();
+                    }
+
+                    for (Entity entity : Room.getCurrentRoom().entities) {
+                        entity.step();
+                    }
+
+                    MasterRender.render(0, Display.getWidth(), Display.getHeight());
                 }
-
-
-                Display.setTitle(String.format("%.2f", DisplayManager.getFPS()));
-
-
-                for (Entity entity : Manager.getCurrentRoom().entities){
-                    entity.step();
-                }
-
-                //prepare vao
-                MasterRender.prepareRender();
-
-                if (Manager.getCurrentRoom().usingViews) {
-                    //render to views
-                    MasterRender.renderToViews();
-                    //render views
-                    MasterRender.renderViews();
-                }
-                else {
-                    //render entity
-                    MasterRender.renderRoom();
-                }
-                //render room
-                MasterRender.renderPostEffect();
-                //render unbind
-                MasterRender.closeRender();
 
                 //update
                 DisplayManager.update();

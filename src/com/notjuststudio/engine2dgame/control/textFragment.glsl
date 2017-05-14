@@ -14,6 +14,6 @@ void main() {
 
     float distance = 1.0 - texture(guiTexture,vec2(textureCoords.x, 1 - textureCoords.y)).a;
 
-    out_Color = vec4(color.xyz, color.a * (1.0 - smoothstep(width, width + edge, distance)));
+    out_Color = vec4(color.rgb, color.a * (1.0 - smoothstep(width, width + edge, distance)));
 
 }

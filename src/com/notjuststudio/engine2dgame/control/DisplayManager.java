@@ -90,11 +90,10 @@ public class DisplayManager {
             //handle exception
             e.printStackTrace();
         }
-
-        lastFrameTime = getCurrentTime();
     }
 
     static void update() {
+//        Display.sync(120);
         Display.update();
         long currentFrameTime = getCurrentTime();
         delta = (currentFrameTime - lastFrameTime) / 1000f;
@@ -120,10 +119,9 @@ public class DisplayManager {
         closeRequest = true;
     }
 
-    static void initSize() {
-        if (Display.getDisplayMode().getWidth() == 0 || Display.getDisplayMode().getHeight() == 0){
-            updateDisplaySize();
-        }
+    static void initLoop() {
+        updateDisplaySize();
+        lastFrameTime = getCurrentTime();
     }
 
     static void setSize(int width, int height) {
@@ -142,6 +140,10 @@ public class DisplayManager {
 
     public static long getCurrentTime() {
         return Sys.getTime() * 1000 / Sys.getTimerResolution();
+    }
+
+    public static float getDelta() {
+        return DisplayManager.delta;
     }
 
     public static int getFullscreenState() {
@@ -201,5 +203,9 @@ public class DisplayManager {
                 return new Setting();
             }
         }
+    }
+
+    public static void setTitle(String title) {
+        Display.setTitle(title);
     }
 }

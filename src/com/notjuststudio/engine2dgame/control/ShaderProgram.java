@@ -21,6 +21,7 @@ public class ShaderProgram {
     private static Map<Integer, Shader> shaderIDs = new HashMap<>();
     private static final ShaderProgram
             entityShader,
+            spriteShader,
             viewShader,
             roomShader,
             fillColorShader,
@@ -35,6 +36,14 @@ public class ShaderProgram {
                 Parser.parseFile(DEFAULT_PATH + "entityFragment.glsl"),
                 new String[]{
                         "transformationMatrix"
+                });
+        spriteShader = new ShaderProgram(
+                Parser.parseFile(DEFAULT_PATH + "partVertex.glsl"),
+                Parser.parseFile(DEFAULT_PATH + "spriteFragment.glsl"),
+                new String[]{
+                        "transformationMatrix",
+                        "alpha",
+                        "isFlipped"
                 });
         viewShader = new ShaderProgram(
                 Parser.parseFile(DEFAULT_PATH + "partVertex.glsl"),
@@ -145,16 +154,19 @@ public class ShaderProgram {
         }
     }
 
-    void loadUniformLocation(String key, Object value) {
-        if (value instanceof Matrix3f) {
-            loadMatrix3f(uniformLocations.get(key), (Matrix3f)value);
-        } else if (value instanceof Boolean) {
-            loadBool(uniformLocations.get(key), (Boolean)value);
+    void loadUniform(String key, Object value) {
+        if (value instanceof Boolean) {
+            loadBool(uniformLocations.get(key), (Boolean) value);
+        } else if (value instanceof Float) {
+            loadFloat(uniformLocations.get(key), (Float) value);
         } else if (value instanceof Vector2f) {
-            loadVector2f(uniformLocations.get(key), (Vector2f)value);
+            loadVector2f(uniformLocations.get(key), (Vector2f) value);
         } else if (value instanceof Vector4f) {
-            loadVector4f(uniformLocations.get(key), (Vector4f)value);
+            loadVector4f(uniformLocations.get(key), (Vector4f) value);
+        } else if (value instanceof Matrix3f) {
+            loadMatrix3f(uniformLocations.get(key), (Matrix3f) value);
         }
+
     }
 
     private static FloatBuffer matrix3fBuffer = BufferUtils.createFloatBuffer(9);
@@ -177,6 +189,10 @@ public class ShaderProgram {
         GL20.glUniform1i(location, value);
     }
 
+    private void loadFloat(int location, float value) {
+        GL20.glUniform1f(location, value);
+    }
+
     private void loadBool(int location, boolean value) {
         GL20.glUniform1i(location, value ? 1 : 0);
     }
@@ -196,6 +212,10 @@ public class ShaderProgram {
 
     static ShaderProgram getEntityShader() {
         return entityShader;
+    }
+
+    static ShaderProgram getSpriteShader() {
+        return spriteShader;
     }
 
     static ShaderProgram getViewShader() {
