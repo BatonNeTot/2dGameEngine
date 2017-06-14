@@ -1,4 +1,4 @@
-package com.notjuststudio.engine2dgame.control;
+package com.notjuststudio.engine2dgame.editor;
 
 import org.python.core.PyCode;
 import org.python.core.PyObject;
@@ -18,15 +18,11 @@ public class PyEngine {
     public final static PrintStream out;
     public final static PrintStream err;
 
-    private static final Queue<String> cmds = new LinkedList<>();
-    private static final List<String> lastCmd = new ArrayList<>();
-
     public static final String
             PREFIX = ">>> ",
             PREFIX_NEW = "... ";
 
     private static PythonInterpreter pyInterpreter;
-    private static PythonInterpreter tmpInterpreter;
 
     static {
         out = System.out;
@@ -34,29 +30,21 @@ public class PyEngine {
     }
 
     static void init() {
-//        tmpInterpreter = new PythonInterpreter();
         pyInterpreter = new PythonInterpreter();
         pyInterpreter.setOut(System.out);
         pyInterpreter.setErr(System.err);
-        loadClasses(Main.class);
+        loadClasses(PyEngine.class);
         exec("import math");
         exec("from java.awt import Color");
         exec("from java.lang import Float");
         exec("from java.lang import String");
-        exec("exit = quit = Game.closeRequest");
+        exec("exit = quit = Manager.close");
+    }
 
-        exec("class List(object):" +
-                "    pass");
-
-        exec("class __objs__(object):\n" +
-                "    pass");
-
-
-        exec("class __rooms__(object):\n" +
-                "    pass");
-
-        exec("def instance_create(x, y, obj):\n" +
-                "  return __obj__()");
+    static void initConsole() {
+        pyInterpreter.setOut(new Console.ConsoleOut());
+        pyInterpreter.setErr(new Console.ConsoleErr());
+        System.out.print(PREFIX);
     }
 
     static void exec(String cmd) {
@@ -85,11 +73,6 @@ public class PyEngine {
 
     static PyCode compile(String script) {
         return pyInterpreter.compile(script);
-    }
-
-    static PythonInterpreter getTmpInterpreter() {
-        tmpInterpreter.cleanup();
-        return tmpInterpreter;
     }
 
     static void loadClasses(Class mClass) {
@@ -139,34 +122,53 @@ public class PyEngine {
         }
     }
 
-    static void execConsole() {
-        Queue<String> cmdsTMP = new LinkedList<>(cmds);
-        cmds.clear();
-
-        while (true) {
-            String cmd;
-            try {
-                cmd = cmdsTMP.remove();
-                String[] lines = cmd.split("\n");
-                System.out.println(PREFIX + lines[0]);
-                for (String line : Arrays.asList(lines).subList(1, lines.length )) {
-                    System.out.println(PREFIX_NEW + line);
-                }
-            } catch (NoSuchElementException e) {
-                break;
+    static void execCommand(String command) {
+        try {
+            PyObject result = eval(command);
+            if (!result.getType().fastGetName().equals("NoneType")) {
+                System.out.println(result);
             }
+        } catch (Exception e) {
             try {
-                PyObject result = eval(cmd);
-                if (!result.getType().fastGetName().equals("NoneType")) {
-                    System.out.println(result);
-                }
-            } catch (Exception e) {
-                try {
-                    exec(cmd);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                exec(command);
+            } catch (Exception e1) {
+                e1.printStackTrace();
             }
         }
     }
+
+//    static void addCommand(String command) {
+//        PyEngine.cmds.add(command);
+//    }
+//
+//    static void execConsole() {
+//        Queue<String> cmdsTMP = new LinkedList<>(cmds);
+//        cmds.clear();
+//
+//        while (true) {
+//            String cmd;
+//            try {
+//                cmd = cmdsTMP.remove();
+//                String[] lines = cmd.split("\n");
+//                System.out.println(PREFIX + lines[0]);
+//                for (String line : Arrays.asList(lines).subList(1, lines.length )) {
+//                    System.out.println(PREFIX_NEW + line);
+//                }
+//            } catch (NoSuchElementException e) {
+//                break;
+//            }
+//            try {
+//                PyObject result = eval(cmd);
+//                if (!result.getType().fastGetName().equals("NoneType")) {
+//                    System.out.println(result);
+//                }
+//            } catch (Exception e) {
+//                try {
+//                    exec(cmd);
+//                } catch (Exception e1) {
+//                    e1.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 }

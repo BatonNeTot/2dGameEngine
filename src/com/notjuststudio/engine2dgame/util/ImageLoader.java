@@ -106,8 +106,16 @@ public class ImageLoader {
 
     public static BufferedImage loadImage(File file) {
         BufferedImage image = null;
-        if (!file.exists())
-            return image;
+        if (!file.exists()) {
+            try {
+                String path = file.getPath().replace('\\','/');
+                image = ImageIO.read(Class.class.getClass().getResource(path));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                return image;
+            }
+        }
         if (file.getName().endsWith("png")) {
             try {
                 image = ImageIO.read(file);

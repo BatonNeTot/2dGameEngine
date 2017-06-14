@@ -72,6 +72,7 @@ public class Main {
             //init
             PyEngine.err.println("Initialization...");
             DisplayManager.init(gameKeeper.getWidthView(), gameKeeper.getHeightView(), gameKeeper.getTitle(), gameKeeper.getIcon(), DisplayManager.WINDOWED_BORDERLESS);
+            Game.init();
             Loader.init();
             MasterRender.init();
             PyEngine.init();
@@ -108,32 +109,36 @@ public class Main {
                 if (DisplayManager.isCloseRequested())
                     break;
 
+                PyEngine.execConsole();
+
+                InputManager.update();
+
+                if (InputManager.isKeyTouched(InputManager.KEY_F3)) {
+                    Game.debug ^= true;
+                }
+                if (InputManager.isKeyTouched(InputManager.KEY_F4)) {
+                    DisplayManager.setFullscreenState(DisplayManager.getFullscreenState() == 1 ? 0 : DisplayManager.getFullscreenState() + 1);
+                    DisplayManager.updateDisplaySetting();
+                }
+                if (InputManager.isKeyTouched(InputManager.KEY_F11)) {
+                    Game.takeScreenshot();
+                }
+
                 if (Room.isChanging) {
+
                     Room.time += DisplayManager.getDelta();
                     if (Room.time >= Room.endTime) {
                         Room.time = 0;
                         Room.isChanging = false;
                         continue;
                     }
-                    Room.previousRoomAnimation.step(DisplayManager.getDelta());
-                    Room.nextRoomAnimation.step(DisplayManager.getDelta());
+                    Room.roomAnimation.step(DisplayManager.getDelta());
 
                     MasterRender.prepareRender();
                     MasterRender.renderRoomAnimation();
                     MasterRender.closeRender();
+
                 } else {
-
-                    PyEngine.execConsole();
-
-                    InputManager.update();
-
-                    if (InputManager.isKeyTouched(InputManager.KEY_F11)) {
-                        Game.takeScreenshot();
-                    }
-                    if (InputManager.isKeyTouched(InputManager.KEY_F4)) {
-                        DisplayManager.setFullscreenState(DisplayManager.getFullscreenState() == 1 ? 0 : DisplayManager.getFullscreenState() + 1);
-                        DisplayManager.updateDisplaySetting();
-                    }
 
                     for (Entity entity : Room.getCurrentRoom().entities) {
                         entity.step();
@@ -151,7 +156,7 @@ public class Main {
             //clean
             PyEngine.err.println("Closing...");
             ShaderProgram.clear();
-            Text.clear();
+            Text.clearUp();
             Loader.clear();
             DisplayManager.destroy();
         }

@@ -10,8 +10,7 @@ import java.nio.ByteBuffer;
 
 import java.awt.image.BufferedImage;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.IntBuffer;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -43,12 +42,15 @@ public class Loader {
         float[] data = {-1, 1, -1, -1, 1, 1, 1, -1};
         vboID = storeDataInAttributeList(0, 2, storeDataInFloatBuffer(data));
         GL20.glEnableVertexAttribArray(0);
-        bindDefaultVAO();
-
+        bindNoneVAO();
 
         frameScreenID = createFrameBuffer();
         frameScreenTextureID = createTextureAttachment(DisplayManager.width, DisplayManager.height);
 
+        TextFont.loadFont(
+                "default",
+                ShaderProgram.DEFAULT_PATH + "debug.png",
+                ShaderProgram.DEFAULT_PATH + "debug.fnt");
     }
 
     static void clear() {
@@ -66,11 +68,32 @@ public class Loader {
         return vaoID;
     }
 
+    static int[] createTextVAO(float[] positions, float[] uvs) {
+        int[] result = new int[4];
+        result[0] = createVAO();
+        int[] indices = new int[positions.length / 4 * 3];
+        for (int i = 0; i < positions.length / 8; i++) {
+            indices[i * 6] = i * 4;
+            indices[i * 6 + 1] = i * 4 + 2;
+            indices[i * 6 + 2] = i * 4 + 1;
+            indices[i * 6 + 3] = i * 4 + 1;
+            indices[i * 6 + 4] = i * 4 + 2;
+            indices[i * 6 + 5] = i * 4 + 3;
+        }
+        result[1] = storeDataInIndicesBuffer(storeDataInIntBufferBuffer(indices));
+        result[2] = storeDataInAttributeList(0, 2, storeDataInFloatBuffer(positions));
+        result[3] = storeDataInAttributeList(1, 2, storeDataInFloatBuffer(uvs));
+        GL20.glEnableVertexAttribArray(0);
+        GL20.glEnableVertexAttribArray(1);
+        bindNoneVAO();
+        return result;
+    }
+
     static void bindVao(int vaoID) {
         GL30.glBindVertexArray(vaoID);
     }
 
-    static void bindDefaultVAO() {
+    static void bindNoneVAO() {
         GL30.glBindVertexArray(0);
     }
 
@@ -93,8 +116,19 @@ public class Loader {
         return vboID;
     }
 
+    private static int storeDataInIndicesBuffer(IntBuffer indices) {
+        int vboID = GL15.glGenBuffers();
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboID);
+        GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, indices, GL15.GL_STATIC_DRAW);
+        return vboID;
+    }
+
     static FloatBuffer storeDataInFloatBuffer(float[] data) {
         return (FloatBuffer) BufferUtils.createFloatBuffer(data.length).put(data).flip();
+    }
+
+    public static IntBuffer storeDataInIntBufferBuffer(int[] data) {
+        return (IntBuffer) BufferUtils.createIntBuffer(data.length).put(data).flip();
     }
 
     static int loadTexture(BufferedImage image, int clamp) {
@@ -219,19 +253,19 @@ public class Loader {
         frameRoomTextureID = 0;
     }
 
-    public static int getFrameScreenID() {
+    static int getFrameScreenID() {
         return frameScreenID;
     }
 
-    public static int getFrameScreenTextureID() {
+    static int getFrameScreenTextureID() {
         return frameScreenTextureID;
     }
 
-    public static int getFrameRoomID() {
+    static int getFrameRoomID() {
         return frameRoomID;
     }
 
-    public static int getFrameRoomTextureID() {
+    static int getFrameRoomTextureID() {
         return frameRoomTextureID;
     }
 }

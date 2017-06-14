@@ -90,6 +90,7 @@ public class DisplayManager {
             //handle exception
             e.printStackTrace();
         }
+
     }
 
     static void update() {
@@ -136,6 +137,10 @@ public class DisplayManager {
     public static float getFPS() {
         if (listOfDelta.isEmpty()) return 0;
         return countOfDelta / ((float) listOfDelta.stream().mapToDouble(Float::floatValue).sum());
+    }
+
+    public static void resetLastFrameTime() {
+        lastFrameTime = getCurrentTime();
     }
 
     public static long getCurrentTime() {

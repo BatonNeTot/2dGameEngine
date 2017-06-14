@@ -1,13 +1,15 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Parser;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Vector2f;
 import com.notjuststudio.engine2dgame.util.MathUtil;
+import org.lwjgl.util.vector.Vector4f;
 
-import java.awt.image.BufferedImage;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,10 +19,13 @@ import java.util.List;
 class MasterRender {
 
     static ShaderProgram currentShader;
+    static Text
+            debug = new Text("default").setSize(20).setColor(Color.WHITE).setAlignV(Text.TOP);
 
-    static int frameID = 0;
-    static int width;
-    static int height;
+    static int
+            frameID = 0,
+    width,
+    height;
 
     static void init() {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -62,7 +67,7 @@ class MasterRender {
     static void renderViews(){
         List<Room.View> views = Room.getCurrentRoom().views;
         bindFrameBuffer(Loader.getFrameScreenID(), DisplayManager.width, DisplayManager.height);
-        clearScreen(0f,0.5f,0f,1f);
+        clearScreen(0f,0.0f,0f,1f);
         setShader(ShaderProgram.getViewShader());
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Loader.getFrameRoomTextureID());
@@ -81,7 +86,6 @@ class MasterRender {
 
     private static void renderRoom(int target, int width, int height) {
         bindFrameBuffer(target, width, height);
-        clearScreen(0f,0f,0f,1f);
         if (Room.getCurrentRoom().background != null) {
             setShader(ShaderProgram.getBackgroundShader());
             Background back = Background.getBackground(Room.getCurrentRoom().background);
@@ -94,6 +98,8 @@ class MasterRender {
                 yScale = Room.getCurrentRoom().height / (float)back.image.getHeight();
             }
             renderBackground(back.textureID, new Vector2f(xScale, yScale));
+        } else {
+            clearScreen(0f,0f,0f,1f);
         }
         setShader(ShaderProgram.getEntityShader());
         Room.getCurrentRoom().entities.sort(Entity::compareTo);
@@ -109,11 +115,12 @@ class MasterRender {
 
     static void renderPostEffect(int target, int width, int height) {
         bindFrameBuffer(target, width, height);
-        clearScreen(0f,0f,0.5f,1f);
         if (Game.background != null) {
             setShader(ShaderProgram.getBackgroundShader());
             Background back = Background.getBackground(Game.background);
             renderBackground(back.textureID, new Vector2f(Display.getWidth() / (float)back.image.getWidth(), Display.getHeight() / (float)back.image.getHeight()));
+        } else {
+            clearScreen(0f,0f,0f,1f);
         }
         setShader(ShaderProgram.getRoomShader());
         float scale = (Display.getWidth()/(float)Display.getHeight())/(DisplayManager.width/(float)DisplayManager.height);
@@ -124,25 +131,27 @@ class MasterRender {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Loader.getFrameScreenTextureID());
         GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
+        renderDebug();
     }
 
     static void renderRoomAnimation() {
         bindFrameBuffer(Loader.getFrameScreenID(), Display.getWidth(), Display.getHeight());
         Draw.isDraw = true;
         List<Entity> list = new ArrayList<>();
-        list.add(Room.previousRoomAnimation.entity);
-        list.add(Room.nextRoomAnimation.entity);
+        list.add(Room.roomAnimation.getEntity("prevRoom"));
+        list.add(Room.roomAnimation.getEntity("nextRoom"));
         list.sort(Entity::compareTo);
         for (Entity entity : list) {
             ((Entity.Methods)entity)._draw_();
         }
         Draw.isDraw = false;
         bindFrameBuffer(0, Display.getWidth(), Display.getHeight());
-        clearScreen(0f,0f,0f,1f);
         if (Game.background != null) {
             setShader(ShaderProgram.getBackgroundShader());
             Background back = Background.getBackground(Game.background);
             renderBackground(back.textureID, new Vector2f(Display.getWidth() / (float)back.image.getWidth(), Display.getHeight() / (float)back.image.getHeight()));
+        } else {
+            clearScreen(0f,0f,0f,1f);
         }
         setShader(ShaderProgram.getUpsideDownPartShader());
         float scale = (Display.getWidth()/(float)Display.getHeight())/(DisplayManager.width/(float)DisplayManager.height);
@@ -153,28 +162,19 @@ class MasterRender {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Loader.getFrameScreenTextureID());
         GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
+        renderDebug();
     }
 
-    static void renderText(Text text, List<Text.Char> characters, int frame, int width, int height) {
-        bindFrameBuffer(frame, width, height);
-        clearScreen(0f,0f,0f,0f);
-        setShader(ShaderProgram.getPartShader());
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, text.font.textureID);
-        for (Text.Char character : characters) {
-            currentShader.loadUniform("transformationMatrix", createTransformationMatrix(character, text, width, height));
-            currentShader.loadUniform("point",
-                    new Vector2f(
-                            (float)text.font.getCharacter(character.id).x / text.font.source.getWidth(),
-                            (float)text.font.getCharacter(character.id).y / text.font.source.getHeight()
-                    ));
-            currentShader.loadUniform("size",
-                    new Vector2f(
-                            (float)text.font.getCharacter(character.id).width / text.font.source.getWidth(),
-                            (float)text.font.getCharacter(character.id).height / text.font.source.getHeight()
-                    ));
-            GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
-        }
+    static void renderDebug() {
+        if (!Game.debug) return;
+        Draw.isDraw = true;
+        long totalMemory = Game.getTotalMemory();
+        Draw.text(0, Room.getHeight(), debug.setText(
+                Game.gpuRenderer + "\n" +
+                        String.format("Memory usage: %.2f", (totalMemory / (double)Game.maxMemory) * 100) + "% (" + Parser.parsMemorySize(totalMemory, Parser.MEGA) + "/" + Parser.parsMemorySize(Game.maxMemory, Parser.MEGA) + ")\n" +
+                        String.format("FPS: %.2f\n", DisplayManager.getFPS())
+        ));
+        Draw.isDraw = false;
     }
 
     static void clearScreen(float red, float green, float blue, float alpha) {
@@ -201,9 +201,24 @@ class MasterRender {
         GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
     }
 
+    static void renderText(Text text, Matrix3f transformationMatrix) {
+        Loader.bindVao(text.vaoID);
+        setShader(ShaderProgram.getTextShader());
+        currentShader.loadUniform("transformationMatrix", transformationMatrix);
+        currentShader.loadUniform("color", text.color);
+        currentShader.loadUniform("outline", text.outline);
+        currentShader.loadUniform("thickness", text.thickness);
+        currentShader.loadUniform("edge", text.edge);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, text.font.textureID);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, text.count * 6, GL11.GL_UNSIGNED_INT, 0);
+        ShaderProgram.useNone();
+        prepareRender();
+    }
+
     static void closeRender() {
         ShaderProgram.useNone();
-        Loader.bindDefaultVAO();
+        Loader.bindNoneVAO();
     }
 
     static void bindFrameBuffer(int id, int width, int height) {
@@ -218,7 +233,7 @@ class MasterRender {
                 entity.getX(), entity.getY(),
                 1,1,
                 entity.getSprite_angle(),
-                entity.sprite.image.getWidth(), entity.sprite.image.getHeight(),
+                entity.sprite.getWidth(), entity.sprite.getHeight(),
                 entity.sprite.xOffset, entity.sprite.yOffset,
                 0, 0,
                 Room.getCurrentRoom().width, Room.getCurrentRoom().height

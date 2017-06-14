@@ -24,8 +24,7 @@ public class Room {
             PREVIOUS = 3;
 
     static boolean hasAnimation = false;
-    static Animation previousRoomAnimation = null;
-    static Animation nextRoomAnimation = null;
+    static Animation roomAnimation = null;
     static float endTime = 0;
     static float time = 0;
 
@@ -204,77 +203,57 @@ public class Room {
     }
 
     static void changeRoom() {
+        if (changingRoomState == NOT_CHANGING)
+            return;
+        if (hasAnimation) {
+            endTime = roomAnimation.endTime;
+            isChanging = true;
+
+            int id = Loader.createFrameBuffer();
+            int texture = Loader.createTextureAttachment(Display.getWidth(), Display.getHeight());
+            final boolean tmp = Game.debug;
+            Game.debug = false;
+            MasterRender.render(id, Display.getWidth(), Display.getHeight());
+            Game.debug = tmp;
+            Entity prev = roomAnimation.getEntity("prevRoom");
+            prev.init();
+            prev.sprite = new Sprite(texture, Display.getWidth(), Display.getHeight());
+            prev.sprite.isFlipped = true;
+            prev.sprite.xOffset = Room.getWidth()/2;
+            prev.sprite.yOffset = Room.getHeight()/2;
+        }
         switch (changingRoomState) {
-            case NOT_CHANGING:
-                return;
             case CHANGING:
-                if (!hasAnimation) {
-                    roomStack.remove().clear();
-                    Room.setCurrentRoom(nextRoomId);
-                } else {
-                    previousRoomAnimation.entity.sprite = new Sprite(Loader.loadImageFromScreen());
-                    previousRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                    previousRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                    roomStack.remove().clear();
-                    Room.setCurrentRoom(nextRoomId);
-                    int id = Loader.createFrameBuffer();
-                    int texture = Loader.createTextureAttachment(Display.getWidth(), Display.getHeight());
-                    MasterRender.render(id, Display.getWidth(), Display.getHeight());
-                    nextRoomAnimation.entity.sprite = new Sprite(texture);
-                    nextRoomAnimation.entity.sprite.isFlipped = true;
-                    nextRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                    nextRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                    GL30.glDeleteFramebuffers(id);
-                }
+                roomStack.remove().clear();
+                Room.setCurrentRoom(nextRoomId);
                 break;
             case NEXT:
-                if (!hasAnimation) {
-                    Room.setCurrentRoom(nextRoomId);
-                } else {
-                    previousRoomAnimation.entity.sprite = new Sprite(Loader.loadImageFromScreen());
-                    previousRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                    previousRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                    Room.setCurrentRoom(nextRoomId);
-                    int id = Loader.createFrameBuffer();
-                    int texture = Loader.createTextureAttachment(Display.getWidth(), Display.getHeight());
-                    MasterRender.render(id, Display.getWidth(), Display.getHeight());
-                    nextRoomAnimation.entity.sprite = new Sprite(texture);
-                    nextRoomAnimation.entity.sprite.isFlipped = true;
-                    nextRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                    nextRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                    GL30.glDeleteFramebuffers(id);
-                }
+                Room.setCurrentRoom(nextRoomId);
                 break;
             case PREVIOUS:
-                if (!hasAnimation) {
-                    roomStack.remove().clear();
-                } else {
-                    if (roomStack.size() != 0) {
-                        previousRoomAnimation.entity.sprite = new Sprite(Loader.loadImageFromScreen());
-                        previousRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                        previousRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                        roomStack.remove().clear();
-                        int id = Loader.createFrameBuffer();
-                        int texture = Loader.createTextureAttachment(Display.getWidth(), Display.getHeight());
-                        MasterRender.render(id, Display.getWidth(), Display.getHeight());
-                        nextRoomAnimation.entity.sprite = new Sprite(texture);
-                        nextRoomAnimation.entity.sprite.isFlipped = true;
-                        nextRoomAnimation.entity.sprite.xOffset = Room.getWidth()/2;
-                        nextRoomAnimation.entity.sprite.yOffset = Room.getHeight()/2;
-                        GL30.glDeleteFramebuffers(id);
-                    }
-                }
+                roomStack.remove().clear();
                 break;
+        }
+        if (hasAnimation && roomStack.size() != 0) {
+            int id = Loader.createFrameBuffer();
+            int texture = Loader.createTextureAttachment(Display.getWidth(), Display.getHeight());
+            final boolean tmp = Game.debug;
+            Game.debug = false;
+            MasterRender.render(id, Display.getWidth(), Display.getHeight());
+            Game.debug = tmp;
+            Entity next = roomAnimation.getEntity("nextRoom");
+            next.init();
+            next.sprite = new Sprite(texture, Display.getWidth(), Display.getHeight());
+            next.sprite.isFlipped = true;
+            next.sprite.xOffset = Room.getWidth()/2;
+            next.sprite.yOffset = Room.getHeight()/2;
+            GL30.glDeleteFramebuffers(id);
         }
         if (roomStack.size() == 0) {
             DisplayManager.closeRequest();
-        } else {
-            if (hasAnimation) {
-                endTime = previousRoomAnimation.endTime;
-                isChanging = true;
-            }
         }
         changingRoomState = NOT_CHANGING;
+        DisplayManager.resetLastFrameTime();
     }
 
     static Room getCurrentRoom() {
@@ -288,11 +267,10 @@ public class Room {
         nextRoomId = id;
     }
 
-    public static void change(String id, Animation previousRoom, Animation nextRoom) {
+    public static void change(String id, Animation animation) {
         changingRoomState = CHANGING;
         hasAnimation = true;
-        Room.previousRoomAnimation = previousRoom;
-        Room.nextRoomAnimation = nextRoom;
+        Room.roomAnimation = animation;
         nextRoomId = id;
     }
 
@@ -302,24 +280,22 @@ public class Room {
         nextRoomId = id;
     }
 
-    public static void next(String id, Animation previousRoom, Animation nextRoom) {
+    public static void next(String id, Animation animation) {
         changingRoomState = NEXT;
         hasAnimation = true;
-        Room.previousRoomAnimation = previousRoom;
-        Room.nextRoomAnimation = nextRoom;
+        Room.roomAnimation = animation;
         nextRoomId = id;
     }
 
-    public static void previous() {
+    public static void prev() {
         changingRoomState = PREVIOUS;
         hasAnimation = false;
     }
 
-    public static void previous(Animation previousRoom, Animation nextRoom) {
+    public static void prev(Animation animation) {
         changingRoomState = PREVIOUS;
         hasAnimation = true;
-        Room.previousRoomAnimation = previousRoom;
-        Room.nextRoomAnimation = nextRoom;
+        Room.roomAnimation = animation;
     }
 
     public static int getWidth() {

@@ -1,6 +1,9 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Parser;
 import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.util.PythonInterpreter;
 
 import java.util.*;
 
@@ -11,30 +14,30 @@ public class Animation {
 
     Map<String, Set<TimeKey>> keys = new HashMap<>();
 //    List<String> keysPermanent = new ArrayList<>();
+    Map<String, Entity> entities = new HashMap<>();
 
     float time = 0;
     float endTime = 0;
     boolean wasPlayed = false;
-    Draw.Drawable drawable = null;
-    Entity entity = null;
+    PyObject list = null;
 
     int interpolationType = 0;
 
     public static final int
             LINEAR = 0;
 
+    {
+        PyEngine.put(Parser.toString(this), this);
+        PyEngine.exec(Parser.toString(this) + ".list=List()");
+    }
+
     public Animation(float endTime) {
         this.endTime = endTime;
     }
 
-    public Animation(float endTime, Draw.Drawable drawable) {
-        this.endTime = endTime;
-        this.drawable = drawable;
-    }
-
     public Animation(float endTime, Entity entity) {
         this.endTime = endTime;
-        this.entity = entity;
+        this.addEntity(entity);
     }
 
     public Animation step(float time) {
@@ -43,36 +46,42 @@ public class Animation {
             this.time -= this.endTime;
             wasPlayed = true;
         }
-        if (this.entity != null) {
-            PyEngine.put("__obj__", entity);
-            for (Map.Entry<String, Float> entry : this.getTimeKey(this.time).entrySet()) {
-                PyEngine.exec("__obj__." + entry.getKey() + "=" + Float.toString(entry.getValue()));
-            }
-            try {
-                PyEngine.exec("del __obj__");
-            } catch (PyException e) {
-                PyEngine.err.println("Can't delete __obj__");
-            }
-        }
+        return this.update();
+    }
+
+//    public Animation draw() {
+//        if (this.drawable != null)
+//            draw(this.drawable);
+//        return this;
+//    }
+//
+//    public Animation draw(Draw.Drawable drawable) {
+//        drawable.draw(this.getTimeKey(time));
+//        return this;
+//    }
+
+    public Animation addEntity(Entity entity) {
+        return addEntity("default", entity);
+    }
+
+    public Animation addEntity(String key, Entity entity) {
+        entities.put(key, entity);
         return this;
     }
 
-    public Animation draw() {
-        if (this.drawable != null)
-            draw(this.drawable);
-        return this;
+    public Entity getEntity() {
+        return this.getEntity("default");
     }
 
-    public Animation draw(Draw.Drawable drawable) {
-        drawable.draw(this.getTimeKey(time));
-        return this;
+    public Entity getEntity(String key) {
+        return entities.get(key);
     }
 
-    public Animation add(String key, float value) {
-        return this.add(0, key, value);
+    public Animation addParameter(String key, float value) {
+        return this.addParameter(0, key, value);
     }
 
-    public Animation add(float time, String key, float value) {
+    public Animation addParameter(float time, String key, float value) {
         Set<TimeKey> set = keys.get(key);
         if (set == null)
             keys.put(key, set = new TreeSet<>());
@@ -81,10 +90,43 @@ public class Animation {
         result.time = Math.max(0, time);
         result.value = value;
         set.add(result);
+        return this.update();
+    }
+
+    public Animation update() {
+        if (!this.entities.isEmpty()) {
+            for (Map.Entry<String, Entity> entry : entities.entrySet()) {
+                PyEngine.put("__tmp__", entry.getValue());
+                PyEngine.exec(Parser.toString(this) + ".list." + entry.getKey() + "=__tmp__");
+            }
+
+            for (Map.Entry<String, Float> entry : this.getTimeKey().entrySet()) {
+                String key = entry.getKey();
+                boolean flag = false;
+                for (Map.Entry<String, Entity> entity : entities.entrySet()) {
+                    if (key.startsWith(entity.getKey())) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag)
+                    key = "default." + key;
+                PyEngine.exec(Parser.toString(this) + ".list." + key + "=" + entry.getValue());
+            }
+        }
         return this;
     }
 
-    Map<String, Float> getTimeKey(float time) {
+    public Animation resetTime() {
+        this.time = 0;
+        return this;
+    }
+
+    public Map<String, Float> getTimeKey() {
+        return this.getTimeKey(this.time);
+    }
+
+    public Map<String, Float> getTimeKey(float time) {
         Map<String, Float> result = new HashMap<>();
         keysLoop:
         for (Map.Entry<String, Set<TimeKey>> entry : keys.entrySet()) {
@@ -134,5 +176,14 @@ public class Animation {
 
     public boolean isWasPlayed() {
         return wasPlayed;
+    }
+
+    public PyObject getList() {
+        return list;
+    }
+
+    public void setList(PyObject list) {
+        if (this.list == null)
+            this.list = list;
     }
 }

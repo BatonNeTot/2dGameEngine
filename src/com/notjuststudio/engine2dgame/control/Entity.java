@@ -38,13 +38,13 @@ public class Entity implements Comparable<Entity>{
     static Entity createEntity(String init, String step, String draw, String destroy) {
         PyEngine.exec("class __tmp__(Entity, Entity.Methods):\n" +
                 "  def _init_(self):\n" +
-                (init == null ? "    pass" : Parser.stringParser(init, 4)) + "\n" +
+                (init == null ? "    pass\n" : Parser.stringParser(init, 4)) +
                 "  def _step_(self):\n" +
-                (step == null ? "    pass" : Parser.stringParser(step, 4)) + "\n" +
+                (step == null ? "    pass\n" : Parser.stringParser(step, 4)) +
                 "  def _draw_(self):\n" +
-                (draw == null ? "    pass" : Parser.stringParser(draw, 4)) + "\n" +
+                (draw == null ? "    pass\n" : Parser.stringParser(draw, 4)) +
                 "  def _destroy_(self):\n" +
-                (destroy == null ? "    pass" : Parser.stringParser(destroy, 4)) + "\n" +
+                (destroy == null ? "    pass\n" : Parser.stringParser(destroy, 4)) +
                 "__obj__ = __tmp__()\n" +
                 "del __tmp__");
 
@@ -85,13 +85,13 @@ public class Entity implements Comparable<Entity>{
         EntityTemplate template = new EntityTemplate();
         template.code = PyEngine.compile("class __tmp__(Entity, Entity.Methods):\n" +
                 "  def _init_(self):\n" +
-                (tmp.getEventInit() == null ? "    pass" : Parser.stringParser(tmp.getEventInit(), 4)) + "\n" +
+                (tmp.getEventInit() == null ? "    pass\n" : Parser.stringParser(tmp.getEventInit(), 4)) +
                 "  def _step_(self):\n" +
-                (tmp.getEventStep() == null ? "    pass" : Parser.stringParser(tmp.getEventStep(), 4)) + "\n" +
+                (tmp.getEventStep() == null ? "    pass\n" : Parser.stringParser(tmp.getEventStep(), 4)) +
                 "  def _draw_(self):\n" +
-                (tmp.getEventDraw() == null ? "    pass" : Parser.stringParser(tmp.getEventDraw(), 4)) + "\n" +
+                (tmp.getEventDraw() == null ? "    pass\n" : Parser.stringParser(tmp.getEventDraw(), 4)) +
                 "  def _destroy_(self):\n" +
-                (tmp.getEventDestroy() == null ? "    pass" : Parser.stringParser(tmp.getEventDestroy(), 4)) + "\n" +
+                (tmp.getEventDestroy() == null ? "    pass\n" : Parser.stringParser(tmp.getEventDestroy(), 4)) +
                 "__obj__ = __tmp__()\n" +
                 "del __tmp__");
         template.sprite = tmp.getSprite();

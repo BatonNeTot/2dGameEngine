@@ -1,6 +1,7 @@
 package com.notjuststudio.engine2dgame.control;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -19,7 +20,9 @@ public class Text implements Draw.Drawable{
 
     boolean needToUpdate = true;
 
-    Color color = Color.BLACK;
+    Color
+            color = Color.WHITE,
+            outline = Color.BLACK;
 
     private int alignV = 0;
     private int alignH = 0;
@@ -31,8 +34,16 @@ public class Text implements Draw.Drawable{
     int width;
     int height;
 
+    float thickness = 0.50f;
+    float edge = 0.05f;
+
     TextFont font;
-    int textureID = 0;
+
+    int vaoID = 0;
+    int indID = 0;
+    int posID = 0;
+    int uvID = 0;
+    int count = 0;
 
     public static final int
             LEFT = 0,
@@ -43,6 +54,12 @@ public class Text implements Draw.Drawable{
 
     {
         texts.add(this);
+    }
+
+    public Text(String id) {
+        this.font = TextFont.getFont(id);
+        this.scale = (float)this.size/this.font.size;
+        this.text = "";
     }
 
     public Text(String text, String id) {
@@ -143,20 +160,20 @@ public class Text implements Draw.Drawable{
     }
 
     void update() {
-        int target = MasterRender.frameID;
-        int width = MasterRender.width;
-        int height = MasterRender.height;
 
-        GL11.glDeleteTextures(textureID);
-        int id = Loader.createFrameBuffer();
+        clear();
+
+        this.count = this.text.replace(" ", "").replace("\n","").length();
+        float[] positions = new float[this.count * 8]; //2*4
+        float[] uvs = new float[this.count * 8]; //2*4
+
         setWidth();
         setHeight();
-        textureID = Loader.createTextureAttachment(this.width, this.height);
-//        MasterRender.prepareRender();
-        List<Char> characters = new ArrayList<>();
+
         int xCursor = 0;
         int yCursor = this.height - (int) Math.floor((float) size  * 9 / 8);
 
+        int counter = 0;
         String[] lines = format();
         for (String line : lines) {
             switch (this.alignH) {
@@ -171,21 +188,41 @@ public class Text implements Draw.Drawable{
                     break;
             }
             for (char symbol : line.toCharArray()) {
-                Char character = new Char();
-                character.id = symbol;
-                character.x = xCursor;
-                character.y = yCursor;
-                characters.add(character);
+                TextFont.Char ch = font.getCharacter(symbol);
+
+                if (symbol != ' ') {
+
+                    positions[counter * 8] = (xCursor + (- ch.xOffset) * scale) / this.width * 2 - 1;
+                    positions[counter * 8 + 1] = (yCursor + (ch.height - ch.yOffset) * scale) / this.height * 2 - 1;
+                    positions[counter * 8 + 2] = (xCursor + (ch.width - ch.xOffset) * scale) / this.width * 2 - 1;
+                    positions[counter * 8 + 3] = (yCursor + (ch.height - ch.yOffset) * scale) / this.height * 2 - 1;
+                    positions[counter * 8 + 4] = (xCursor + (- ch.xOffset) * scale) / this.width * 2 - 1;
+                    positions[counter * 8 + 5] = (yCursor + ( - ch.yOffset) * scale) / this.height * 2 - 1;
+                    positions[counter * 8 + 6] = (xCursor + (ch.width - ch.xOffset) * scale) / this.width * 2 - 1;
+                    positions[counter * 8 + 7] = (yCursor + ( - ch.yOffset) * scale) / this.height * 2 - 1;
+
+                    uvs[counter * 8] = (ch.x) / (float)font.source.getWidth();
+                    uvs[counter * 8 + 1] = (ch.y) / (float)font.source.getHeight();
+                    uvs[counter * 8 + 2] = (ch.x + ch.width) / (float)font.source.getWidth();
+                    uvs[counter * 8 + 3] = (ch.y) / (float)font.source.getHeight();
+                    uvs[counter * 8 + 4] = (ch.x) / (float)font.source.getWidth();
+                    uvs[counter * 8 + 5] = (ch.y + ch.height) / (float)font.source.getHeight();
+                    uvs[counter * 8 + 6] = (ch.x + ch.width) / (float)font.source.getWidth();
+                    uvs[counter * 8 + 7] = (ch.y + ch.height) / (float)font.source.getHeight();
+
+                    counter++;
+                }
+
                 xCursor += Math.floor(font.getCharacter(symbol).step * scale) + letterSpacing;
             }
             yCursor -= this.size * 9 / 8;
         }
 
-        MasterRender.renderText(this, characters, id, this.width, this.height);
-
-        MasterRender.bindFrameBuffer(target, width, height);
-//        MasterRender.closeRender();
-        GL30.glDeleteFramebuffers(id);
+        int[] result = Loader.createTextVAO(positions, uvs);
+        this.vaoID = result[0];
+        this.indID = result[1];
+        this.posID = result[2];
+        this.uvID = result[3];
 
         needToUpdate = false;
     }
@@ -198,8 +235,8 @@ public class Text implements Draw.Drawable{
         this.setSize((int)Math.floor(parameters.getOrDefault("size", (float)this.size)));
 
         if (this.needToUpdate) this.update();
-        MasterRender.setShader(ShaderProgram.getTextShader());
-        MasterRender.currentShader.loadUniform("color",new Vector4f(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.color.getAlpha()));
+//        MasterRender.setShader(ShaderProgram.getTextShader());
+//        MasterRender.currentShader.loadUniform("color",new Vector4f(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), this.color.getAlpha()));
         int xOffset = 0, yOffset = 0;
         switch (this.getAlignH()) {
             case Text.LEFT:
@@ -223,16 +260,16 @@ public class Text implements Draw.Drawable{
                 yOffset = (int) Math.floor((float) this.size / 8);
                 break;
         }
-        MasterRender.renderGUI(this.textureID,
-                MasterRender.createTransformationMatrix(
-                        x, y,
-                        1,1,
-                        0,
-                        this.width, this.height,
-                        xOffset, yOffset,
-                        0, 0,
-                        Room.getCurrentRoom().width, Room.getCurrentRoom().height)
-        );
+
+        MasterRender.renderText(this, MasterRender.createTransformationMatrix(
+                x,y,
+                1,1,
+                0,
+                this.width, this.height,
+                xOffset, yOffset,
+                0,0,
+                Room.getCurrentRoom().width, Room.getCurrentRoom().height
+        ));
     }
 
     class Char {
@@ -240,9 +277,18 @@ public class Text implements Draw.Drawable{
         int x, y;
     }
 
-    static void clear() {
+    void clear() {
+        GL30.glDeleteVertexArrays(vaoID);
+        GL15.glDeleteBuffers(posID);
+        GL15.glDeleteBuffers(uvID);
+        vaoID = 0;
+        posID = 0;
+        uvID = 0;
+    }
+
+    static void clearUp() {
         for (Text text : texts){
-            GL11.glDeleteTextures(text.textureID);
+            text.clear();
         }
     }
 
@@ -312,6 +358,10 @@ public class Text implements Draw.Drawable{
         return this;
     }
 
+    public Text setSize(float size) {
+        return this.setSize((int)Math.floor(size));
+    }
+
     public TextFont getFont() {
         return font;
     }
@@ -320,5 +370,21 @@ public class Text implements Draw.Drawable{
         this.font = TextFont.getFont(id);
         this.needToUpdate = true;
         return this;
+    }
+
+    public float getThickness() {
+        return thickness;
+    }
+
+    public void setThickness(float thickness) {
+        this.thickness = thickness;
+    }
+
+    public float getEdge() {
+        return edge;
+    }
+
+    public void setEdge(float edge) {
+        this.edge = edge;
     }
 }

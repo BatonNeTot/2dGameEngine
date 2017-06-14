@@ -26,20 +26,21 @@ public class Draw {
     }
 
     public static void sprite(float x, float y, float scale, String id) {
-        sprite(x,y,scale, Sprite.getSprite(id));
+        sprite(x,y,scale,scale, 1,Sprite.getSprite(id));
     }
 
     public static void sprite(float x, float y, Sprite sprite) {
-        sprite(x,y,1,sprite);
+        sprite(x,y,1,1,1,sprite);
     }
 
-    public static void sprite(float x, float y, float scale, Sprite sprite) {
+    public static void sprite(float x, float y, float xScale, float yScale, float alpha, Sprite sprite) {
         if (!isDraw) return;
         Map<String, Float> parameters = new HashMap<>();
         parameters.put("x", x);
         parameters.put("y", y);
-        parameters.put("xScale", scale);
-        parameters.put("yScale", scale);
+        parameters.put("xScale", xScale);
+        parameters.put("yScale", yScale);
+        parameters.put("alpha", alpha);
         sprite.draw(parameters);
     }
 

@@ -25,7 +25,11 @@ public class Sprite implements Draw.Drawable{
 
     boolean isAccurateCollusionCheck = false;
 
-    BufferedImage image;
+    private BufferedImage image = null;
+    int width = 0;
+    int height = 0;
+
+
     int textureID;
 
     Sprite(BufferedImage image) {
@@ -36,6 +40,12 @@ public class Sprite implements Draw.Drawable{
     Sprite(int textureID) {
         this.textureID = textureID;
         image = Loader.loadImageFromTexture(textureID);
+    }
+
+    Sprite(int textureID, int width, int height) {
+        this.textureID = textureID;
+        this.width = width;
+        this.height = height;
     }
 
     private Sprite(String filePath) {
@@ -80,7 +90,7 @@ public class Sprite implements Draw.Drawable{
                         x, y,
                         xScale, yScale,
                         0,
-                        this.image.getWidth(), this.image.getHeight(),
+                        this.getWidth(), this.getHeight(),
                         this.xOffset, this.yOffset,
                         0, 0,
                         Room.getCurrentRoom().width, Room.getCurrentRoom().height)
@@ -88,10 +98,14 @@ public class Sprite implements Draw.Drawable{
     }
 
     public int getWidth() {
-        return image.getWidth();
+        return image == null ? width : image.getWidth();
     }
 
     public int getHeight() {
-        return image.getHeight();
+        return image == null ? height : image.getHeight();
+    }
+
+    public int getData(int x, int y) {
+        return image == null ? 0 : image.getRGB(x,y);
     }
 }

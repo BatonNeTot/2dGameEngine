@@ -9,6 +9,7 @@ import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
+import java.awt.*;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class ShaderProgram {
 
     private static Map<Integer, Shader> shaderIDs = new HashMap<>();
+    static final String DEFAULT_PATH;
     private static final ShaderProgram
             entityShader,
             spriteShader,
@@ -30,7 +32,7 @@ public class ShaderProgram {
             upsideDownPartShader,
             textShader;
     static {
-        final String DEFAULT_PATH = Parser.packageToString(ShaderProgram.class);
+        DEFAULT_PATH = Parser.packageToString(ShaderProgram.class);
         entityShader = new ShaderProgram(
                 Parser.parseFile(DEFAULT_PATH + "partVertex.glsl"),
                 Parser.parseFile(DEFAULT_PATH + "entityFragment.glsl"),
@@ -86,16 +88,24 @@ public class ShaderProgram {
                         "transformationMatrix"
                 });
         textShader = new ShaderProgram(
-                Parser.parseFile(DEFAULT_PATH + "partVertex.glsl"),
+                Parser.parseFile(DEFAULT_PATH + "textVertex.glsl"),
                 Parser.parseFile(DEFAULT_PATH + "textFragment.glsl"),
                 new String[]{
                         "transformationMatrix",
-                        "color"
-                });
+                        "color",
+                        "outline",
+                        "thickness",
+                        "edge"
+                },
+                new HashMap<Integer, String>(){{
+                    put(0, "vertexPos");
+                    put(1, "vertexUV");
+                }});
     };
 
     int ID;
     private Map<String, Integer> uniformLocations = new HashMap<>();
+//    private Map<Integer, String> attributeLocations = new HashMap<>();
 
     ShaderProgram(String vertex, String fragment, String[] uniformKeys) {
         Shader ids = new Shader();
@@ -113,6 +123,13 @@ public class ShaderProgram {
 
         getUniformLocations(uniformKeys);
         shaderIDs.put(ID, ids);
+    }
+
+    ShaderProgram(String vertex, String fragment, String[] uniformKeys, Map<Integer, String> attributeKeys) {
+        this(vertex, fragment, uniformKeys);
+        for (Map.Entry<Integer, String> entry : attributeKeys.entrySet()) {
+            GL20.glBindAttribLocation(this.ID, entry.getKey(), entry.getValue());
+        }
     }
 
     static void clear() {
@@ -159,7 +176,10 @@ public class ShaderProgram {
             loadBool(uniformLocations.get(key), (Boolean) value);
         } else if (value instanceof Float) {
             loadFloat(uniformLocations.get(key), (Float) value);
-        } else if (value instanceof Vector2f) {
+        } else if (value instanceof Color) {
+            Color color = (Color)value;
+            loadVector4f(uniformLocations.get(key), new Vector4f(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()));
+        }else if (value instanceof Vector2f) {
             loadVector2f(uniformLocations.get(key), (Vector2f) value);
         } else if (value instanceof Vector4f) {
             loadVector4f(uniformLocations.get(key), (Vector4f) value);
@@ -185,6 +205,10 @@ public class ShaderProgram {
         GL20.glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 
+    private void loadBool(int location, boolean value) {
+        GL20.glUniform1i(location, value ? 1 : 0);
+    }
+
     private void loadInt(int location, int value) {
         GL20.glUniform1i(location, value);
     }
@@ -193,9 +217,6 @@ public class ShaderProgram {
         GL20.glUniform1f(location, value);
     }
 
-    private void loadBool(int location, boolean value) {
-        GL20.glUniform1i(location, value ? 1 : 0);
-    }
 
     private static class Shader {
         private int vertexID;

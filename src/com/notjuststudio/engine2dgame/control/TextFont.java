@@ -26,16 +26,19 @@ class TextFont {
 
     int size;
 
-    private TextFont(String filePath) {
-        com.notjuststudio.engine2dgame.xml.font.Font tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.font.Font.class);
-
-        source = ImageLoader.loadImage(new File(tmp.getSource()));
+    TextFont(String sourcePath, String metaPath) {
+        source = ImageLoader.loadImage(new File(sourcePath));
         textureID = Loader.loadTexture(source, GL14.GL_MIRRORED_REPEAT);
 
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new FileReader(new File(tmp.getMeta())));
+            try {
+                String meta = metaPath.startsWith("/") ? metaPath : "/" + metaPath;
+                InputStream in = Class.class.getResourceAsStream(meta);
+                reader = new BufferedReader(new InputStreamReader(in));
+            } catch (NullPointerException e) {
+                reader = new BufferedReader(new FileReader(new File(metaPath)));
+            }
 
             String line = reader.readLine();
             String[] fields = line.split(" ");
@@ -68,15 +71,25 @@ class TextFont {
                         parse(list.get(8))
                 ));
             }
+            reader.close();
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Can't read meta file " + tmp.getMeta() + " from " + filePath);
         }
-
     }
 
     static void loadFont(String id, String filePath) {
-        fontMap.put(id, new TextFont(filePath));
+        com.notjuststudio.engine2dgame.xml.font.Font tmp =
+                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.font.Font.class);
+        try {
+            loadFont(id, tmp.getSource(), tmp.getMeta());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Can't read meta file " + tmp.getMeta() + " from " + filePath);
+        }
+    }
+
+    static void loadFont(String id, String sourcePath, String metaPath) {
+        fontMap.put(id, new TextFont(sourcePath, metaPath));
     }
 
     private int parse(String field) {
@@ -107,7 +120,10 @@ class TextFont {
     }
 
     static TextFont getFont(String id) {
-        return fontMap.get(id);
+        if (fontMap.containsKey(id))
+            return fontMap.get(id);
+        else
+            return fontMap.get("default");
     }
 
     static String getName(TextFont font) {
