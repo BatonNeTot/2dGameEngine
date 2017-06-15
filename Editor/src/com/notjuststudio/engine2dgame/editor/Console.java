@@ -5,10 +5,7 @@ import com.notjuststudio.engine2dgame.util.Parser;
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -26,6 +23,8 @@ public class Console extends JTextPane {
 
     static Style normalStyle;
     static Style errStyle;
+
+    boolean needNextLine = false;
 
     final java.util.List<String> lastCmd = new ArrayList<>();
     private int lastIndex = 1;
@@ -68,6 +67,7 @@ public class Console extends JTextPane {
                 }
 
                 append("\n");
+                needNextLine = true;
                 execCommand(command);
                 setCaretPosition(getStartLinePosition() + 4);
             }
@@ -89,14 +89,7 @@ public class Console extends JTextPane {
                 lastCmd.set(lastCmd.size() - lastIndex, command);
                 lastIndex++;
 
-                int sum = getStartLinePosition();
-
-                try {
-                    getStyledDocument().remove(sum + 4, getStyledDocument().getLength() - (sum + 4));
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
-                System.out.print(lastCmd.get(lastCmd.size() - lastIndex));
+                updateInputLine((bigCommand ? PyEngine.PREFIX_NEW : PyEngine.PREFIX) + lastCmd.get(lastCmd.size() - lastIndex));
             }
         });
         getActionMap().put("down", new AbstractAction() {
@@ -109,14 +102,7 @@ public class Console extends JTextPane {
                 lastCmd.set(lastCmd.size() - lastIndex, command);
                 lastIndex--;
 
-                int sum = getStartLinePosition();
-
-                try {
-                    getStyledDocument().remove(sum + 4, getStyledDocument().getLength() - (sum + 4));
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
-                System.out.print(lastCmd.get(lastCmd.size() - lastIndex));
+                updateInputLine((bigCommand ? PyEngine.PREFIX_NEW : PyEngine.PREFIX) + lastCmd.get(lastCmd.size() - lastIndex));
             }
         });
         getActionMap().put("left", new AbstractAction() {
@@ -128,7 +114,7 @@ public class Console extends JTextPane {
         getActionMap().put("right", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                setCaretPosition(Math.max(Math.min(getCaretPosition() + 1, getEndLinePosition()), getStartLinePosition() + 4));
+                setCaretPosition(Math.max(Math.min(getCaretPosition() + 1, getText().length()), getStartLinePosition() + 4));
             }
         });
         addKeyListener(new KeyAdapter() {
@@ -142,21 +128,44 @@ public class Console extends JTextPane {
         });
     }
 
-    int getStartLinePosition() {
-        java.util.List<String> lines = Arrays.asList(getText().split(System.lineSeparator()));
-        int sum = 0;
-        for (String str : lines.subList(0, lines.size() - 1))
-            sum += str.length() + 1;
-        return sum;
+    void updateInputLine(String string) {
+        boolean moreThanOne = getLineCount() > 1;
+        try {
+            int position = getStartLinePosition() - (moreThanOne ? 1 : 0);
+            getStyledDocument().remove(position, getDocument().getLength() - position);
+            if (moreThanOne)
+                append("\n", normalStyle);
+            append(string, normalStyle);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    int getEndLinePosition() {
-        String[] lines = getText().split(System.lineSeparator());
-        int sum = 0;
-        for (String str : lines)
-            sum += str.length() + 1;
-        return sum - 1;
+    int getLineCount() {
+        int result = 1;
+        for (char ch : getText().toCharArray())
+            if (ch == '\n')
+                result++;
+        return result;
     }
+
+    int getStartLinePosition() {
+        char[] line = getText().toCharArray();
+        int result = line.length;
+        while (result > 0) {
+            if (line[result - 1] == '\n')
+                break;
+            result--;
+        }
+        return result - (getLineCount() - 1);
+
+//        java.util.List<String> lines = Arrays.asList(getText().split(System.lineSeparator()));
+//        int sum = 0;
+//        for (String str : lines.subList(0, lines.size() - 1))
+//            sum += str.length() + 1;
+//        return sum;
+    }
+
 
     String getCommand() {
         String[] lines = getText().split(System.lineSeparator());
@@ -176,8 +185,12 @@ public class Console extends JTextPane {
     }
 
     void append(String string, Style style) {
+        append(string, getDocument().getLength(), style);
+    }
+
+    void append(String string, int offset, Style style) {
         try {
-            getStyledDocument().insertString(getDocument().getLength(), string, style);
+            getStyledDocument().insertString(offset, string, style);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -191,7 +204,7 @@ public class Console extends JTextPane {
                 waitNextTab = false;
                 PyEngine.execCommand(commandBuffer);
                 commandBuffer = "";
-                System.out.print(PyEngine.PREFIX);
+                updateInputLine(PyEngine.PREFIX);
                 return;
             }
             if (waitNextTab) {
@@ -202,7 +215,7 @@ public class Console extends JTextPane {
                     bigCommand = false;
                     PyEngine.execCommand(commandBuffer);
                     commandBuffer = "";
-                    System.out.print(PyEngine.PREFIX);
+                    updateInputLine(PyEngine.PREFIX);
                     return;
                 }
             } else {
@@ -216,23 +229,23 @@ public class Console extends JTextPane {
                     bigCommand = false;
                     PyEngine.execCommand(commandBuffer);
                     commandBuffer = "";
-                    System.out.print(PyEngine.PREFIX);
+                    updateInputLine(PyEngine.PREFIX);
                     return;
                 }
             }
             if (command.replace(" ", "").endsWith(":")) {
                 waitNextTab = true;
             }
-            System.out.print(PyEngine.PREFIX_NEW);
+            updateInputLine(PyEngine.PREFIX_NEW);
         } else {
             if (command.replace(" ", "").endsWith(":")) {
                 bigCommand = true;
                 waitNextTab = true;
-                System.out.print(PyEngine.PREFIX_NEW);
+                updateInputLine(PyEngine.PREFIX_NEW);
             } else {
                 PyEngine.execCommand(commandBuffer);
                 commandBuffer = "";
-                System.out.print(PyEngine.PREFIX);
+                updateInputLine(PyEngine.PREFIX);
             }
         }
     }
@@ -242,7 +255,18 @@ public class Console extends JTextPane {
         @Override
         public void write(int b) throws IOException {
             char c = (char) b;
-            Manager.console.append(String.valueOf(c), normalStyle);
+            if (Manager.console.getLineCount() <= 1)
+                Manager.console.append("\n", 0, normalStyle);
+            int position = Manager.console.getStartLinePosition() - 1;
+            if (Manager.console.needNextLine) {
+                Manager.console.append("\n", position++, normalStyle);
+                Manager.console.needNextLine = false;
+            }
+            if (c == '\n') {
+                Manager.console.needNextLine = true;
+            } else {
+                Manager.console.append(String.valueOf(c), position, normalStyle);
+            }
         }
     }
 
@@ -251,7 +275,18 @@ public class Console extends JTextPane {
         @Override
         public void write(int b) throws IOException {
             char c = (char) b;
-            Manager.console.append(String.valueOf(c), errStyle);
+            if (Manager.console.getLineCount() <= 1)
+                Manager.console.append("\n", 0, normalStyle);
+            int position = Manager.console.getStartLinePosition() - 1;
+            if (Manager.console.needNextLine) {
+                Manager.console.append("\n", position++, errStyle);
+                Manager.console.needNextLine = false;
+            }
+            if (c == '\n') {
+                Manager.console.needNextLine = true;
+            } else {
+                Manager.console.append(String.valueOf(c), position, errStyle);
+            }
         }
 
     }

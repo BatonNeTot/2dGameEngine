@@ -44,7 +44,7 @@ public class PyEngine {
     static void initConsole() {
         pyInterpreter.setOut(new Console.ConsoleOut());
         pyInterpreter.setErr(new Console.ConsoleErr());
-        System.out.print(PREFIX);
+        Manager.console.updateInputLine(PREFIX);
     }
 
     static void exec(String cmd) {

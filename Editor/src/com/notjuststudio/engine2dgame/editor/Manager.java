@@ -5,6 +5,10 @@ package com.notjuststudio.engine2dgame.editor;
  */
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.PrintStream;
@@ -50,6 +54,24 @@ public class Manager implements ActionListener {
         //Create and set up the window.
         int width = 800;
         int height = 600;
+
+        leafPopup = new JPopupMenu() {{
+            add(new JMenuItem("Delete"));
+        }};
+
+        nodePopup = new JPopupMenu() {{
+            JPopupMenu popup = this;
+            add(new JMenuItem("New") {{
+                JMenuItem me = this;
+                addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        System.out.println(popup.getInvoker());
+                    }
+                });
+            }});
+        }};
+
         frame = new JFrame("Editor") {{
 
             addComponentListener(new ComponentAdapter() {
@@ -116,13 +138,36 @@ public class Manager implements ActionListener {
 
             add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                     new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                            new JPanel() {{
-                                setBorder(new EtchedBorder());
-                            }},
-                            new JPanel() {{
-                                setBorder(new EtchedBorder());
-                            }}
-                            ){{
+                            new JScrollPane(new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(){{
+                                add(new DefaultMutableTreeNode("Sprite"){{
+                                    add(new DefaultMutableTreeNode("myhero", false));
+                                }});
+                                add(new DefaultMutableTreeNode("Background"));
+                                add(new DefaultMutableTreeNode("Font"));
+                                add(new DefaultMutableTreeNode("Entity"));
+                                add(new DefaultMutableTreeNode("Room"));
+                            }}, true)){{
+                                JTree me = this;
+                                setRootVisible(true);
+                                addMouseListener(new MouseAdapter() {
+                                    @Override
+                                    public void mousePressed ( MouseEvent e )
+                                    {
+                                        if ( SwingUtilities.isRightMouseButton ( e ) )
+                                        {
+                                            TreePath path = me.getPathForLocation ( e.getX (), e.getY () );
+                                            Rectangle pathBounds = me.getUI ().getPathBounds ( me, path );
+                                            if ( pathBounds != null && pathBounds.contains ( e.getX (), e.getY () ) )
+                                            {
+                                                nodePopup.show (me, e.getX (), e.getY () );
+                                            }
+                                        }
+                                    }
+                                });
+                            }}){{setBorder(new EtchedBorder());}},
+                            new JScrollPane(new JPanel() {{
+
+                            }}){{setBorder(new EtchedBorder());}}){{
                         setDividerLocation(150);
                     }},
                     new JScrollPane(
@@ -154,6 +199,9 @@ public class Manager implements ActionListener {
     }
 
     static JFrame frame;
+    static JPopupMenu leafPopup;
+    static JPopupMenu nodePopup;
+    static TreeNode selectedNode;
     static boolean wasChanged = false;
     static Console console;
 
