@@ -38,13 +38,13 @@ public class PyEngine {
         exec("from java.awt import Color");
         exec("from java.lang import Float");
         exec("from java.lang import String");
-        exec("exit = quit = Manager.close");
+        exec("exit = quit = Window.close");
     }
 
     static void initConsole() {
         pyInterpreter.setOut(new Console.ConsoleOut());
         pyInterpreter.setErr(new Console.ConsoleErr());
-        Manager.console.updateInputLine(PREFIX);
+        Window.console.updateInputLine(PREFIX);
     }
 
     static void exec(String cmd) {

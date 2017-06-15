@@ -255,17 +255,17 @@ public class Console extends JTextPane {
         @Override
         public void write(int b) throws IOException {
             char c = (char) b;
-            if (Manager.console.getLineCount() <= 1)
-                Manager.console.append("\n", 0, normalStyle);
-            int position = Manager.console.getStartLinePosition() - 1;
-            if (Manager.console.needNextLine) {
-                Manager.console.append("\n", position++, normalStyle);
-                Manager.console.needNextLine = false;
+            if (Window.console.getLineCount() <= 1)
+                Window.console.append("\n", 0, normalStyle);
+            int position = Window.console.getStartLinePosition() - 1;
+            if (Window.console.needNextLine) {
+                Window.console.append("\n", position++, normalStyle);
+                Window.console.needNextLine = false;
             }
             if (c == '\n') {
-                Manager.console.needNextLine = true;
+                Window.console.needNextLine = true;
             } else {
-                Manager.console.append(String.valueOf(c), position, normalStyle);
+                Window.console.append(String.valueOf(c), position, normalStyle);
             }
         }
     }
@@ -275,17 +275,17 @@ public class Console extends JTextPane {
         @Override
         public void write(int b) throws IOException {
             char c = (char) b;
-            if (Manager.console.getLineCount() <= 1)
-                Manager.console.append("\n", 0, normalStyle);
-            int position = Manager.console.getStartLinePosition() - 1;
-            if (Manager.console.needNextLine) {
-                Manager.console.append("\n", position++, errStyle);
-                Manager.console.needNextLine = false;
+            if (Window.console.getLineCount() <= 1)
+                Window.console.append("\n", 0, normalStyle);
+            int position = Window.console.getStartLinePosition() - 1;
+            if (Window.console.needNextLine) {
+                Window.console.append("\n", position++, errStyle);
+                Window.console.needNextLine = false;
             }
             if (c == '\n') {
-                Manager.console.needNextLine = true;
+                Window.console.needNextLine = true;
             } else {
-                Manager.console.append(String.valueOf(c), position, errStyle);
+                Window.console.append(String.valueOf(c), position, errStyle);
             }
         }
 
