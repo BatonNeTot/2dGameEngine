@@ -5,6 +5,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -136,4 +137,5 @@ public class Parser {
         }
         return sum;
     }
+
 }

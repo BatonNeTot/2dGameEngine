@@ -39,6 +39,7 @@ public class PyEngine {
         exec("from java.lang import Float");
         exec("from java.lang import String");
         exec("exit = quit = Window.close");
+        exec("clear = Console.clear");
     }
 
     static void initConsole() {

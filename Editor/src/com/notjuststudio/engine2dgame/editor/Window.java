@@ -17,8 +17,6 @@ import java.util.ArrayList;
  */
 public class Window {
 
-
-
     public void actionPerformed(ActionEvent e) {}
 
     private static void initLookAndFeel() {
@@ -56,8 +54,8 @@ public class Window {
         JFrame.setDefaultLookAndFeelDecorated(true);
 
         //Create and set up the window.
-        int width = 800;
-        int height = 600;
+        final int width = 800;
+        final int height = 600;
 
         leafPopup = new JPopupMenu() {{
             add(new JMenuItem("Delete"));
@@ -76,7 +74,7 @@ public class Window {
             }});
         }};
 
-        frame = new JFrame("Editor") {{
+        window = new JFrame("Editor") {{
 
             addComponentListener(new ComponentAdapter() {
                 @Override
@@ -97,13 +95,19 @@ public class Window {
                         addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                System.out.println("new");
+
                             }
                         });
                     }});
                     add(new JMenuItem("Open") {{
                         setMnemonic('O');
                         setAccelerator(KeyStroke.getKeyStroke("control O"));
+                        addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                Manager.openProject();
+                            }
+                        });
                     }});
                     add(new JMenuItem("Save") {{
                         setAccelerator(KeyStroke.getKeyStroke("control S"));
@@ -112,12 +116,21 @@ public class Window {
                         setAccelerator(KeyStroke.getKeyStroke("shift control S"));
                     }});
                     addSeparator();
+                    add(new JMenuItem("Project parameters...") {{
+                        addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+
+                            }
+                        });
+                    }});
+                    addSeparator();
                     add(new JMenuItem("Exit") {{
                         Component me = this;
                         addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent event) {
-                                PyEngine.exec("quit()");
+                                Window.close();
                             }
                         });
 
@@ -143,9 +156,7 @@ public class Window {
             add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                     new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                             new JScrollPane(new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(){{
-                                add((MutableTreeNode)(spriteNode = new DefaultMutableTreeNode("Sprite"){{
-                                    add(new DefaultMutableTreeNode("myhero", false));
-                                }}));
+                                add((MutableTreeNode)(spriteNode = new DefaultMutableTreeNode("Sprite")));
                                 add((MutableTreeNode)(backgroundNode = new DefaultMutableTreeNode("Background")));
                                 add((MutableTreeNode)(fontNode = new DefaultMutableTreeNode("Font")));
                                 add((MutableTreeNode)(entityNode = new DefaultMutableTreeNode("Entity")));
@@ -232,8 +243,8 @@ public class Window {
         System.setErr(new PrintStream(new Console.ConsoleErr()));
         PyEngine.initConsole();
 
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        frame.addWindowListener(new WindowAdapter() {
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        window.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 PyEngine.exec("quit()");
@@ -241,20 +252,20 @@ public class Window {
         });
 
         //Display the window.
-        frame.setSize(width, height);
+        window.setSize(width, height);
         GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         int screenWidth = gd.getDisplayMode().getWidth();
         int screenHeight = gd.getDisplayMode().getHeight();
-//        frame.setLocation((screenWidth - width)/2, (screenHeight - height)/2);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+//        window.setLocation((screenWidth - width)/2, (screenHeight - height)/2);
+        window.setLocationRelativeTo(null);
+        window.setVisible(true);
     }
 
     static TreePath[]
             treePathBuffer;
 
     static JFrame
-            frame;
+            window;
 
     static JPopupMenu
             leafPopup,
@@ -285,7 +296,7 @@ public class Window {
                 default:
                     return;
             }
-        frame.dispose();
+        window.dispose();
     }
 
     static TreePath getPath(TreeNode treeNode) {

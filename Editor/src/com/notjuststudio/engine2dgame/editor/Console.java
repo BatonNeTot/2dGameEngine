@@ -141,34 +141,27 @@ public class Console extends JTextPane {
         }
     }
 
+    @Override
+    public String getText() {
+        return super.getText().replace(System.lineSeparator(), "\n");
+    }
+
     int getLineCount() {
         int result = 1;
-        for (char ch : getText().toCharArray())
-            if (ch == '\n')
-                result++;
+        int index = 0;
+        while((index = getText().indexOf('\n', index + 1)) >= 0) {
+            result++;
+        }
         return result;
     }
 
     int getStartLinePosition() {
-        char[] line = getText().toCharArray();
-        int result = line.length;
-        while (result > 0) {
-            if (line[result - 1] == '\n')
-                break;
-            result--;
-        }
-        return result - (getLineCount() - 1);
-
-//        java.util.List<String> lines = Arrays.asList(getText().split(System.lineSeparator()));
-//        int sum = 0;
-//        for (String str : lines.subList(0, lines.size() - 1))
-//            sum += str.length() + 1;
-//        return sum;
+        return getText().lastIndexOf('\n') + 1;
     }
 
 
     String getCommand() {
-        String[] lines = getText().split(System.lineSeparator());
+        String[] lines = getText().split("\n");
         return lines[lines.length - 1].substring(4);
     }
 
@@ -194,6 +187,16 @@ public class Console extends JTextPane {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void clear(){
+
+        try {
+            Window.console.getStyledDocument().remove(0, Window.console.getDocument().getLength());
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+        Window.console.updateInputLine(PyEngine.PREFIX);
     }
 
     void execCommand(String command) {
@@ -253,42 +256,42 @@ public class Console extends JTextPane {
     public static class ConsoleOut extends OutputStream {
 
         @Override
-        public void write(int b) throws IOException {
-            char c = (char) b;
-            if (Window.console.getLineCount() <= 1)
-                Window.console.append("\n", 0, normalStyle);
-            int position = Window.console.getStartLinePosition() - 1;
-            if (Window.console.needNextLine) {
-                Window.console.append("\n", position++, normalStyle);
-                Window.console.needNextLine = false;
-            }
-            if (c == '\n') {
-                Window.console.needNextLine = true;
-            } else {
-                Window.console.append(String.valueOf(c), position, normalStyle);
-            }
+        public void write(byte[] b, int off, int len) throws IOException
+        {
+            Window.console.write(new String(b, off, len), normalStyle);
         }
+
+        @Override
+        public void write(int b) throws IOException {}
     }
 
     public static class ConsoleErr extends OutputStream {
 
         @Override
-        public void write(int b) throws IOException {
-            char c = (char) b;
-            if (Window.console.getLineCount() <= 1)
-                Window.console.append("\n", 0, normalStyle);
-            int position = Window.console.getStartLinePosition() - 1;
-            if (Window.console.needNextLine) {
-                Window.console.append("\n", position++, errStyle);
-                Window.console.needNextLine = false;
-            }
-            if (c == '\n') {
-                Window.console.needNextLine = true;
-            } else {
-                Window.console.append(String.valueOf(c), position, errStyle);
-            }
+        public void write(byte[] b, int off, int len) throws IOException {
+            Window.console.write(new String(b, off, len), errStyle);
         }
 
+        @Override
+        public void write(int b) throws IOException {}
+
+    }
+
+    private void write(String text, Style style) {
+        text = text.replace(System.lineSeparator(), "\n");
+        if (Window.console.getLineCount() <= 1)
+            Window.console.append("\n", 0, style);
+        int position = Window.console.getStartLinePosition() - 1;
+        if (Window.console.needNextLine) {
+            Window.console.append("\n", position, style);
+            position += 1;
+            Window.console.needNextLine = false;
+        }
+        if (text.endsWith("\n")) {
+            Window.console.needNextLine = true;
+            text = text.substring(0, text.lastIndexOf("\n"));
+        }
+        Window.console.append(text, position, style);
     }
 
 }
