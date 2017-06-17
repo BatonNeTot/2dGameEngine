@@ -1,5 +1,7 @@
 package com.notjuststudio.engine2dgame.editor;
 
+import com.notjuststudio.engine2dgame.util.ImageLoader;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.TreeExpansionEvent;
@@ -9,8 +11,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by George on 15.06.2017.
@@ -33,6 +38,12 @@ public class Window {
 
         //Make sure we have nice window decorations.
         JFrame.setDefaultLookAndFeelDecorated(true);
+
+        UIManager.put("MenuItem.acceleratorForeground", Color.GRAY);
+
+        UIManager.put("Editor.newFileIcon", new ImageIcon(ImageLoader.loadImage(new File("Editor/res/newFile.png"))));
+        UIManager.put("Editor.openFileIcon", new ImageIcon(ImageLoader.loadImage(new File("Editor/res/openFile.png"))));
+        UIManager.put("Editor.saveFileIcon", new ImageIcon(ImageLoader.loadImage(new File("Editor/res/saveFile.png"))));
 
         //Create and set up the window.
         final int width = 800;
@@ -59,11 +70,134 @@ public class Window {
             }});
         }};
 
-        spriteNode = new DefaultMutableTreeNode("Sprite");
-        backgroundNode = new DefaultMutableTreeNode("Background");
-        fontNode = new DefaultMutableTreeNode("Font");
-        entityNode = new DefaultMutableTreeNode("Entity");
-        roomNode = new DefaultMutableTreeNode("Room");
+        tree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(){{
+            add(Sprite.get());
+            add(Background.get());
+            add(Font.get());
+            add(Entity.get());
+            add(Room.get());
+        }})){{
+            final JTree me = this;
+            setRootVisible(true);
+            setCellRenderer(new DefaultTreeCellRenderer() {
+                @Override
+                public Component getTreeCellRendererComponent(JTree tree,
+                                                              Object value, boolean selected, boolean expanded,
+                                                              boolean isLeaf, int row, boolean focused) {
+                    Component c = super.getTreeCellRendererComponent(tree, value,
+                            selected, expanded, isLeaf, row, focused);
+                    if (tree.getModel().getRoot().equals(value))
+                        setIcon(null);
+                    else if (value instanceof Resource)
+                        setIcon(((Resource)value).getIcon());
+                    else {
+                        TreeNode parent = ((TreeNode)value).getParent();
+                        if (parent instanceof Resource) {
+                            final Resource resource = (Resource) parent;
+                            setIcon(resource.getIcon((String)((DefaultMutableTreeNode)value).getUserObject()));
+                        }
+                    }
+                    return c;
+                }
+            });
+            addMouseListener(new MouseAdapter() {
+
+                TreePath getPath(MouseEvent e) {
+                    final TreePath path = me.getPathForLocation ( e.getX (), e.getY () );
+                    final Rectangle pathBounds = me.getUI ().getPathBounds ( me, path );
+                    return pathBounds != null && pathBounds.contains ( e.getX (), e.getY () ) ? path : null;
+                }
+
+                @Override
+                public void mousePressed ( MouseEvent e )
+                {
+                    final TreePath path = getPath(e);
+                    if (path != null) {
+                        boolean flag = false;
+                        try {
+                            for (TreePath treePath : me.getSelectionPaths()) {
+                                if (treePath.equals(path)) {
+                                    flag = true;
+                                    break;
+                                }
+                            }
+                        } catch (NullPointerException n) {}
+                        if (!flag) {
+                            me.setSelectionPath(path);
+                        }
+
+                        if ( SwingUtilities.isRightMouseButton ( e ) ) {
+                            switch (path.getPath().length) {
+                                case 2: {
+                                    selectedNode = (TreeNode)path.getLastPathComponent();
+                                    nodePopup.show(me, e.getX(), e.getY());
+                                    break;
+                                }
+                                case 3: {
+                                    selectedNode = (TreeNode)path.getLastPathComponent();
+                                    leafPopup.show(me, e.getX(), e.getY());
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        setSelectionPath(null);
+                    }
+                }
+
+                void mouseDoubleClicked(MouseEvent e) {
+                    final TreePath path = getPath(e);
+                    if (path != null && path.getPath().length == 3) {
+                        final Resource type = ((Resource)path.getPath()[1]);
+                        final String name = (String)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+                        if (!WorkSpace.get().hasTab(name))
+                            WorkSpace.get().addTab(name, type.getIcon(), type.openFile(name));
+
+                    }
+                }
+
+                boolean isAlreadyOneClick;
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (isAlreadyOneClick) {
+                        timer.cancel();
+                        mouseDoubleClicked(e);
+                        isAlreadyOneClick = false;
+                    } else {
+                        isAlreadyOneClick = true;
+                        timer = new Timer("doubleclickTimer", false);
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                isAlreadyOneClick = false;
+                                timer.cancel();
+                            }
+                        }, (Integer)Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval"));
+                    }
+                }
+            });
+            addTreeExpansionListener(new TreeExpansionListener() {
+                @Override
+                public void treeExpanded(TreeExpansionEvent event) {
+                }
+
+                @Override
+                public void treeCollapsed(TreeExpansionEvent event) {
+                    if (event.getPath().getPath().length == 1)
+                        me.expandRow(0);
+                }
+            });
+            addTreeSelectionListener(new TreeSelectionListener() {
+                @Override
+                public void valueChanged(TreeSelectionEvent e) {
+                    if (e.getPath().getPath().length <= 2)
+                        me.setSelectionPaths(treePathBuffer);
+                    else
+                        treePathBuffer = me.getSelectionPaths();
+                }
+            });
+        }};
 
         window = new JFrame("Editor") {{
 
@@ -83,6 +217,7 @@ public class Window {
 
                     add(new JMenuItem("New") {{
                         setAccelerator(KeyStroke.getKeyStroke("control N"));
+                        setIcon(UIManager.getIcon("Editor.newFileIcon"));
                         addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
@@ -93,6 +228,7 @@ public class Window {
                     add(new JMenuItem("Open") {{
                         setMnemonic('O');
                         setAccelerator(KeyStroke.getKeyStroke("control O"));
+                        setIcon(UIManager.getIcon("Editor.openFileIcon"));
                         addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
@@ -102,9 +238,11 @@ public class Window {
                     }});
                     add(new JMenuItem("Save") {{
                         setAccelerator(KeyStroke.getKeyStroke("control S"));
+                        setIcon(UIManager.getIcon("Editor.saveFileIcon"));
                     }});
                     add(new JMenuItem("Save all") {{
                         setAccelerator(KeyStroke.getKeyStroke("shift control S"));
+                        setIcon(UIManager.getIcon("Editor.saveFileIcon"));
                     }});
                     addSeparator();
                     add(new JMenuItem("Project parameters...") {{
@@ -146,82 +284,9 @@ public class Window {
 
             add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                     new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                            new JScrollPane(new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(){{
-                                add((MutableTreeNode)spriteNode);
-                                add((MutableTreeNode)backgroundNode);
-                                add((MutableTreeNode)fontNode);
-                                add((MutableTreeNode)entityNode);
-                                add((MutableTreeNode)roomNode);
-                            }}, true)){{
-                                final JTree me = this;
-                                setRootVisible(true);
-                                for (int i = getRowCount() - 1; i > 0; i--) {
-                                    expandRow(i);
-                                    collapseRow(i);
-                                }
-                                addMouseListener(new MouseAdapter() {
-                                    @Override
-                                    public void mousePressed ( MouseEvent e )
-                                    {
-                                        final TreePath path = me.getPathForLocation ( e.getX (), e.getY () );
-                                        final Rectangle pathBounds = me.getUI ().getPathBounds ( me, path );
-                                        if ( pathBounds != null && pathBounds.contains ( e.getX (), e.getY () ) ) {
-                                            boolean flag = false;
-                                            try {
-                                                for (TreePath treePath : me.getSelectionPaths()) {
-                                                    if (treePath.equals(path)) {
-                                                        flag = true;
-                                                        break;
-                                                    }
-                                                }
-                                            } catch (NullPointerException n) {}
-                                            if (!flag) {
-                                                me.setSelectionPath(path);
-                                            }
-
-                                            if ( SwingUtilities.isRightMouseButton ( e ) ) {
-                                                switch (path.getPath().length) {
-                                                    case 2: {
-                                                        selectedNode = (TreeNode)path.getLastPathComponent();
-                                                        nodePopup.show(me, e.getX(), e.getY());
-                                                        break;
-                                                    }
-                                                    case 3: {
-                                                        selectedNode = (TreeNode)path.getLastPathComponent();
-                                                        leafPopup.show(me, e.getX(), e.getY());
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            setSelectionPath(null);
-                                        }
-                                    }
-                                });
-                                addTreeExpansionListener(new TreeExpansionListener() {
-                                    @Override
-                                    public void treeExpanded(TreeExpansionEvent event) {
-                                    }
-
-                                    @Override
-                                    public void treeCollapsed(TreeExpansionEvent event) {
-                                        if (event.getPath().getPath().length == 1)
-                                            me.expandRow(0);
-                                    }
-                                });
-                                addTreeSelectionListener(new TreeSelectionListener() {
-                                    @Override
-                                    public void valueChanged(TreeSelectionEvent e) {
-                                        if (e.getPath().getPath().length <= 2)
-                                            me.setSelectionPaths(treePathBuffer);
-                                        else
-                                            treePathBuffer = me.getSelectionPaths();
-                                    }
-                                });
-                            }}){{setBorder(new EtchedBorder());}},
-                            new JScrollPane(new JPanel() {{
-
-                            }}){{setBorder(new EtchedBorder());}}){{
+                            new JScrollPane(tree){{
+                                setBorder(new EtchedBorder());
+                    }}, WorkSpace.get() ){{
                         setDividerLocation(150);
                     }},
                     new JScrollPane(Console.get())) {{
@@ -246,6 +311,11 @@ public class Window {
 //        window.setLocation((screenWidth - width)/2, (screenHeight - height)/2);
         window.setLocationRelativeTo(null);
         window.setVisible(true);
+    }
+
+    void updateRow(int row) {
+        tree.expandRow(row);
+        tree.collapseRow(row);
     }
 
     private void initLookAndFeel() {
@@ -276,6 +346,9 @@ public class Window {
         get();
     }
 
+    Timer
+            timer = null;
+
     TreePath[]
             treePathBuffer;
 
@@ -286,13 +359,8 @@ public class Window {
             leafPopup,
             nodePopup;
 
-    final TreeNode
-            spriteNode,
-            backgroundNode,
-            fontNode,
-            entityNode,
-            roomNode;
-
+    final JTree
+            tree;
     TreeNode
             selectedNode;
 

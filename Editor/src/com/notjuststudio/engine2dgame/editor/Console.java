@@ -41,7 +41,7 @@ public class Console extends JTextPane {
         StyleConstants.setForeground(normalStyle, Color.BLACK);
 
         editStyle = addStyle("editput", null);
-        StyleConstants.setForeground(editStyle, Color.BLUE);
+        StyleConstants.setForeground(editStyle, new Color(0, 127, 0));
 
         errStyle = addStyle("errput", null);
         StyleConstants.setForeground(errStyle, Color.RED);

@@ -32,7 +32,7 @@ public class ShaderProgram {
             upsideDownPartShader,
             textShader;
     static {
-        DEFAULT_PATH = Parser.packageToString(ShaderProgram.class);
+        DEFAULT_PATH = "/com/notjuststudio/engine2dgame/res/";
         entityShader = new ShaderProgram(
                 Parser.parseFile(DEFAULT_PATH + "partVertex.glsl"),
                 Parser.parseFile(DEFAULT_PATH + "entityFragment.glsl"),

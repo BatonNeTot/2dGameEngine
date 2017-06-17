@@ -19,7 +19,7 @@ public class Parser {
         try {
             return ((JAXBElement<T>) JAXBContext.newInstance(objectFactory).createUnmarshaller().unmarshal(new File(filePath))).getValue();
         } catch (JAXBException e) {
-            throw new InvalidXmlException("Can't load xml to class" + container.getName() + " from file " + filePath);
+            throw new InvalidXmlException("Can't load xml to class " + container.getName() + " from file " + filePath);
         }
 
     }

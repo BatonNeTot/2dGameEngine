@@ -6,10 +6,9 @@ package com.notjuststudio.engine2dgame.editor;
 import com.notjuststudio.engine2dgame.util.Parser;
 import com.notjuststudio.engine2dgame.xml.game.Game;
 
-import javax.swing.*;
+import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.Arrays;
 
 public class Manager {
 
@@ -43,10 +42,22 @@ public class Manager {
             gameKeeper =
                     Parser.loadXml(file.getPath(), com.notjuststudio.engine2dgame.xml.game.ObjectFactory.class, Game.class);
         } catch (Parser.InvalidXmlException e) {
-            System.err.println("Неполучилося");
+            System.err.println("Can't load project " + file.getPath());
             return;
         }
-        System.out.println("Все збс");
+        boolean flag = true;
+
+        flag &= Sprite.get().loadResources(gameKeeper.getSprite());
+        flag &= Background.get().loadResources(gameKeeper.getBackground());
+        flag &= Font.get().loadResources(gameKeeper.getFont());
+        flag &= Entity.get().loadResources(gameKeeper.getEntity());
+        flag &= Room.get().loadResources(gameKeeper.getRoom());
+
+        if (flag) {
+            System.out.println("Successful load");
+        } else {
+            System.out.println("Project was not fully load");
+        }
     }
 
     public static void main(final String[] args) {

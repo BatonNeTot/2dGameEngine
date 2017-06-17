@@ -110,7 +110,7 @@ public class ImageLoader {
             try {
                 String path = file.getPath().replace('\\','/');
                 image = ImageIO.read(Class.class.getClass().getResource(path));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             } finally {
                 return image;
