@@ -9,6 +9,7 @@ import com.notjuststudio.engine2dgame.xml.game.Game;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
+import java.util.Arrays;
 
 public class Manager {
 
@@ -27,32 +28,34 @@ public class Manager {
                 return "Game extension (.xml)";
             }
         });
-        int ret = fileChooser.showDialog(Window.window, "Open");
+        final int ret = fileChooser.showDialog(Window.get().window, "Open");
         if (ret == JFileChooser.APPROVE_OPTION)
             openProject(fileChooser.getSelectedFile());
     }
 
-    public static void openProject(String filePath) {
+    public static void openProject(final String filePath) {
         openProject(new File(filePath));
     }
 
-    static void openProject(File file) {
-        Game gameKeeper =
-                Parser.loadXml(file.getPath(), com.notjuststudio.engine2dgame.xml.game.ObjectFactory.class, Game.class);
-        if (gameKeeper == null)
+    static void openProject(final File file) {
+        final Game gameKeeper;
+        try {
+            gameKeeper =
+                    Parser.loadXml(file.getPath(), com.notjuststudio.engine2dgame.xml.game.ObjectFactory.class, Game.class);
+        } catch (Parser.InvalidXmlException e) {
             System.err.println("Неполучилося");
-            else
-            System.out.println("Все збс");
+            return;
+        }
+        System.out.println("Все збс");
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         //Schedule a job for the event dispatch thread:
         //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                Window.createAndShowGUI();
-                System.out.print(("Все".toCharArray().length) + "\n");
-                System.out.println("Все");
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            Window.createAndShowGUI();
+            if (args.length >= 1) {
+                Manager.openProject(args[0]);
             }
         });
     }

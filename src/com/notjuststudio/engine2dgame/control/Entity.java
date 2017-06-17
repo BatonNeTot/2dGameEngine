@@ -79,8 +79,14 @@ public class Entity implements Comparable<Entity>{
     }
 
     static void loadEntity(String id, String filePath) {
-        com.notjuststudio.engine2dgame.xml.ent.Entity tmp =
+        final com.notjuststudio.engine2dgame.xml.ent.Entity tmp;
+        try{
+            tmp =
                 Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.ent.Entity.class);
+        } catch (Parser.InvalidXmlException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
 
         EntityTemplate template = new EntityTemplate();
         template.code = PyEngine.compile("class __tmp__(Entity, Entity.Methods):\n" +

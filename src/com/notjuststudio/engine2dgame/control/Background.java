@@ -23,8 +23,14 @@ public class Background {
     int textureID;
 
     private Background(String filePath) {
-        com.notjuststudio.engine2dgame.xml.back.Background tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.back.Background.class);
+        final com.notjuststudio.engine2dgame.xml.back.Background tmp;
+        try {
+            tmp =
+                    Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.back.Background.class);
+        } catch (Parser.InvalidXmlException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
 
         stretched = tmp.isStretched();
 

@@ -17,34 +17,15 @@ import java.util.ArrayList;
  */
 public class Window {
 
-    public void actionPerformed(ActionEvent e) {}
+    private static Window singleton = null;
 
-    private static void initLookAndFeel() {
-        String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
-        try {
-
-            UIManager.setLookAndFeel(lookAndFeel);
-        } catch (ClassNotFoundException e) {
-            System.err.println("Couldn't find class for specified look and feel:"
-                    + lookAndFeel);
-            System.err.println("Did you include the L&F library in the class path?");
-            System.err.println("Using the default look and feel.");
-        } catch (UnsupportedLookAndFeelException e) {
-            System.err.println("Can't use the specified look and feel ("
-                    + lookAndFeel
-                    + ") on this platform.");
-            System.err.println("Using the default look and feel.");
-        } catch (Exception e) {
-            System.err.println("Couldn't get specified look and feel ("
-                    + lookAndFeel
-                    + "), for some reason.");
-            System.err.println("Using the default look and feel.");
-            e.printStackTrace();
-        }
+    static Window get() {
+        if (singleton == null)
+            singleton = new Window();
+        return singleton;
     }
 
-    static void createAndShowGUI() {
-
+    private Window() {
         PyEngine.init();
 
         //Set the look and feel.
@@ -57,14 +38,18 @@ public class Window {
         final int width = 800;
         final int height = 600;
 
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        final int screenWidth = gd.getDisplayMode().getWidth();
+        final int screenHeight = gd.getDisplayMode().getHeight();
+
         leafPopup = new JPopupMenu() {{
             add(new JMenuItem("Delete"));
         }};
 
         nodePopup = new JPopupMenu() {{
-            JPopupMenu popup = this;
+            final JPopupMenu popup = this;
             add(new JMenuItem("New") {{
-                JMenuItem me = this;
+                final JMenuItem me = this;
                 addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -73,6 +58,12 @@ public class Window {
                 });
             }});
         }};
+
+        spriteNode = new DefaultMutableTreeNode("Sprite");
+        backgroundNode = new DefaultMutableTreeNode("Background");
+        fontNode = new DefaultMutableTreeNode("Font");
+        entityNode = new DefaultMutableTreeNode("Entity");
+        roomNode = new DefaultMutableTreeNode("Room");
 
         window = new JFrame("Editor") {{
 
@@ -156,13 +147,13 @@ public class Window {
             add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                     new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                             new JScrollPane(new JTree(new DefaultTreeModel(new DefaultMutableTreeNode(){{
-                                add((MutableTreeNode)(spriteNode = new DefaultMutableTreeNode("Sprite")));
-                                add((MutableTreeNode)(backgroundNode = new DefaultMutableTreeNode("Background")));
-                                add((MutableTreeNode)(fontNode = new DefaultMutableTreeNode("Font")));
-                                add((MutableTreeNode)(entityNode = new DefaultMutableTreeNode("Entity")));
-                                add((MutableTreeNode)(roomNode = new DefaultMutableTreeNode("Room")));
+                                add((MutableTreeNode)spriteNode);
+                                add((MutableTreeNode)backgroundNode);
+                                add((MutableTreeNode)fontNode);
+                                add((MutableTreeNode)entityNode);
+                                add((MutableTreeNode)roomNode);
                             }}, true)){{
-                                JTree me = this;
+                                final JTree me = this;
                                 setRootVisible(true);
                                 for (int i = getRowCount() - 1; i > 0; i--) {
                                     expandRow(i);
@@ -172,8 +163,8 @@ public class Window {
                                     @Override
                                     public void mousePressed ( MouseEvent e )
                                     {
-                                        TreePath path = me.getPathForLocation ( e.getX (), e.getY () );
-                                        Rectangle pathBounds = me.getUI ().getPathBounds ( me, path );
+                                        final TreePath path = me.getPathForLocation ( e.getX (), e.getY () );
+                                        final Rectangle pathBounds = me.getUI ().getPathBounds ( me, path );
                                         if ( pathBounds != null && pathBounds.contains ( e.getX (), e.getY () ) ) {
                                             boolean flag = false;
                                             try {
@@ -214,8 +205,8 @@ public class Window {
 
                                     @Override
                                     public void treeCollapsed(TreeExpansionEvent event) {
-                                        if (event.getPath().getPath().length == 1);
-                                        me.expandRow(0);
+                                        if (event.getPath().getPath().length == 1)
+                                            me.expandRow(0);
                                     }
                                 });
                                 addTreeSelectionListener(new TreeSelectionListener() {
@@ -233,60 +224,83 @@ public class Window {
                             }}){{setBorder(new EtchedBorder());}}){{
                         setDividerLocation(150);
                     }},
-                    new JScrollPane(
-                            console = new Console())) {{
+                    new JScrollPane(Console.get())) {{
                 setDividerLocation(height - 150);
             }});
         }};
 
-        System.setOut(new PrintStream(new Console.ConsoleOut()));
-        System.setErr(new PrintStream(new Console.ConsoleErr()));
-        PyEngine.initConsole();
+        System.setOut(new PrintStream(Console.get().getOut()));
+        System.setErr(new PrintStream(Console.get().getErr()));
+        PyEngine.get().initConsole();
 
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                PyEngine.exec("quit()");
+                Window.close();
             }
         });
 
         //Display the window.
         window.setSize(width, height);
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        int screenWidth = gd.getDisplayMode().getWidth();
-        int screenHeight = gd.getDisplayMode().getHeight();
 //        window.setLocation((screenWidth - width)/2, (screenHeight - height)/2);
         window.setLocationRelativeTo(null);
         window.setVisible(true);
     }
 
-    static TreePath[]
+    private void initLookAndFeel() {
+        final String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
+        try {
+
+            UIManager.setLookAndFeel(lookAndFeel);
+        } catch (ClassNotFoundException e) {
+            System.err.println("Couldn't find class for specified look and feel:"
+                    + lookAndFeel);
+            System.err.println("Did you include the L&F library in the class path?");
+            System.err.println("Using the default look and feel.");
+        } catch (UnsupportedLookAndFeelException e) {
+            System.err.println("Can't use the specified look and feel ("
+                    + lookAndFeel
+                    + ") on this platform.");
+            System.err.println("Using the default look and feel.");
+        } catch (Exception e) {
+            System.err.println("Couldn't get specified look and feel ("
+                    + lookAndFeel
+                    + "), for some reason.");
+            System.err.println("Using the default look and feel.");
+            e.printStackTrace();
+        }
+    }
+
+    static void createAndShowGUI() {
+        get();
+    }
+
+    TreePath[]
             treePathBuffer;
 
-    static JFrame
+    final JFrame
             window;
 
-    static JPopupMenu
+    final JPopupMenu
             leafPopup,
             nodePopup;
 
-    static TreeNode
+    final TreeNode
             spriteNode,
             backgroundNode,
             fontNode,
             entityNode,
             roomNode;
 
-    static TreeNode
+    TreeNode
             selectedNode;
 
-    static boolean wasChanged = false;
-    static Console console;
+    boolean wasChanged = false;
 
     public static void close() {
         exit:
-        if (wasChanged)
+        if (get().wasChanged)
             switch (JOptionPane.showConfirmDialog(null, "Do you want to save changes?", "Save changes", JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE)) {
                 case JOptionPane.YES_OPTION:
@@ -296,11 +310,11 @@ public class Window {
                 default:
                     return;
             }
-        window.dispose();
+        get().window.dispose();
     }
 
     static TreePath getPath(TreeNode treeNode) {
-        java.util.List<Object> nodes = new ArrayList<Object>();
+        final java.util.List<Object> nodes = new ArrayList<Object>();
         if (treeNode != null) {
             nodes.add(treeNode);
             treeNode = treeNode.getParent();

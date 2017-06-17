@@ -1,7 +1,7 @@
 package com.notjuststudio.engine2dgame.editor;
 
-import org.python.core.PyCode;
-import org.python.core.PyObject;
+import com.notjuststudio.engine2dgame.util.Parser;
+import org.python.core.*;
 import org.python.util.PythonInterpreter;
 
 import java.io.*;
@@ -15,21 +15,29 @@ import java.util.zip.ZipInputStream;
  */
 public class PyEngine {
 
+    private static PyEngine singleton = null;
+
     public final static PrintStream out;
     public final static PrintStream err;
 
     public static final String
-            PREFIX = ">>> ",
-            PREFIX_NEW = "... ";
+            PREFIX = ">>>",
+            PREFIX_NEW = "...";
 
-    private static PythonInterpreter pyInterpreter;
+    private final PythonInterpreter pyInterpreter;
 
     static {
         out = System.out;
         err = System.err;
     }
 
-    static void init() {
+    static PyEngine get() {
+        if (singleton == null)
+            singleton = new PyEngine();
+        return singleton;
+    }
+
+    private PyEngine() {
         pyInterpreter = new PythonInterpreter();
         pyInterpreter.setOut(System.out);
         pyInterpreter.setErr(System.err);
@@ -42,44 +50,83 @@ public class PyEngine {
         exec("clear = Console.clear");
     }
 
-    static void initConsole() {
-        pyInterpreter.setOut(new Console.ConsoleOut());
-        pyInterpreter.setErr(new Console.ConsoleErr());
-        Window.console.updateInputLine(PREFIX);
+    static void init() {
+        get();
     }
 
-    static void exec(String cmd) {
+    void initConsole() {
+        pyInterpreter.setOut(Console.get().getOut());
+        pyInterpreter.setErr(Console.get().getErr());
+        Console.get().updateInputLine();
+    }
+
+    String[] getDir() {
+        return getDir("");
+    }
+
+    String[] getDir(final String name) {
+        if (name.isEmpty()) {
+            final Set<Object> keySet = ((PyStringMap) pyInterpreter.getLocals()).getMap().keySet();
+            return keySet.toArray(new String[keySet.size()]);
+        } else {
+            try {
+                return getDir(get(name));
+            } catch (PyException e) {
+                return new String[]{};
+            }
+        }
+    }
+
+    String[] getDir(final PyObject object) {
+        final List<String> list = (PyList) object.__dir__();
+        final String[] pythons = list.toArray(new String[list.size()]);
+        if (isJava(object)) {
+            final Set<String> javas = new HashSet<String>(){{
+                addAll(Arrays.asList(Parser.getDir(object.__tojava__(Object.class))));
+                addAll(list);
+            }};
+            return javas.toArray(new String[javas.size()]);
+        } else {
+            return pythons;
+        }
+    }
+
+    PyObject get(final String fullName) {
+        return pyInterpreter.eval(fullName);
+    }
+
+    boolean isJava(final PyObject object) {
+        return object.__str__().toString().indexOf("__main__") < 0;
+    }
+
+    void exec(final String cmd) {
         pyInterpreter.exec(cmd);
     }
 
-    static void exec(PyCode script) {
+    void exec(final PyCode script) {
         pyInterpreter.exec(script);
     }
 
-    static PyObject eval(String cmd) {
+    PyObject eval(final String cmd) {
         return pyInterpreter.eval(cmd);
     }
 
-    static PyObject get(String name) {
-        return pyInterpreter.get(name);
-    }
-
-    static void put(String name, Object value) {
+    void put(final String name, final Object value) {
         pyInterpreter.set(name, value);
     }
 
-    static <T> T get(String name, Class<T> javaClass) {
+    <T> T get(final String name, final Class<T> javaClass) {
         return pyInterpreter.get(name, javaClass);
     }
 
-    static PyCode compile(String script) {
+    PyCode compile(final String script) {
         return pyInterpreter.compile(script);
     }
 
-    static void loadClasses(Class mClass) {
-        String pack = mClass.getPackage().toString().split(" ")[1];
-        String packageDir = pack.replaceAll("[.]", "/");
-        URL url = mClass.getProtectionDomain().getCodeSource().getLocation();
+    void loadClasses(final Class mClass) {
+        final String pack = mClass.getPackage().toString().split(" ")[1];
+        final String packageDir = pack.replaceAll("[.]", "/");
+        final URL url = mClass.getProtectionDomain().getCodeSource().getLocation();
         try {
             if (new File(url.getFile()).isFile()) {
                 printAllClass(packageDir, url);
@@ -91,24 +138,24 @@ public class PyEngine {
         }
     }
 
-    private static void printAllClass(String pack, URL url) throws IOException {
-        ZipInputStream zip = new ZipInputStream(url.openStream());
+    private void printAllClass(final String pack, final URL url) throws IOException {
+        final ZipInputStream zip = new ZipInputStream(url.openStream());
         while(true) {
-            ZipEntry e = zip.getNextEntry();
+            final ZipEntry e = zip.getNextEntry();
             if (e == null)
                 break;
-            String name = e.getName();
+            final String name = e.getName();
             if (name.startsWith(pack) && name.endsWith(".class") && !name.contains("$") && !name.contains("colladaConverter")) {
                 pyInterpreter.exec("from " + name.substring(0, name.lastIndexOf('/')).replaceAll("[/]", ".") + " import " + name.substring(name.lastIndexOf('/') + 1, name.length() - 6));
             }
         }
     }
 
-    private static void printAllClass(int level, String pack, Class mClass) throws IOException {
-        ClassLoader cl = mClass.getClassLoader();
-        URL upackage = cl.getResource(pack);
-        InputStream in = (InputStream) upackage.getContent();
-        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+    private void printAllClass(final int level, final String pack, final Class mClass) throws IOException {
+        final ClassLoader cl = mClass.getClassLoader();
+        final URL upackage = cl.getResource(pack);
+        final InputStream in = (InputStream) upackage.getContent();
+        final BufferedReader br = new BufferedReader(new InputStreamReader(in));
         String line = null;
         while ((line = br.readLine()) != null) {
             if (line.contains("$") || line.contains("colladaConverter") || line.endsWith("glsl") || line.endsWith("png")  || line.endsWith("fnt"))
@@ -123,53 +170,19 @@ public class PyEngine {
         }
     }
 
-    static void execCommand(String command) {
+    void execCommand(final String command) {
         try {
-            PyObject result = eval(command);
+            final PyObject result = eval(command);
             if (!result.getType().fastGetName().equals("NoneType")) {
                 System.out.println(result);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             try {
                 exec(command);
-            } catch (Exception e1) {
+            } catch (final Exception e1) {
                 e1.printStackTrace();
             }
         }
     }
 
-//    static void addCommand(String command) {
-//        PyEngine.cmds.add(command);
-//    }
-//
-//    static void execConsole() {
-//        Queue<String> cmdsTMP = new LinkedList<>(cmds);
-//        cmds.clear();
-//
-//        while (true) {
-//            String cmd;
-//            try {
-//                cmd = cmdsTMP.remove();
-//                String[] lines = cmd.split("\n");
-//                System.out.println(PREFIX + lines[0]);
-//                for (String line : Arrays.asList(lines).subList(1, lines.length )) {
-//                    System.out.println(PREFIX_NEW + line);
-//                }
-//            } catch (NoSuchElementException e) {
-//                break;
-//            }
-//            try {
-//                PyObject result = eval(cmd);
-//                if (!result.getType().fastGetName().equals("NoneType")) {
-//                    System.out.println(result);
-//                }
-//            } catch (Exception e) {
-//                try {
-//                    exec(cmd);
-//                } catch (Exception e1) {
-//                    e1.printStackTrace();
-//                }
-//            }
-//        }
-//    }
 }

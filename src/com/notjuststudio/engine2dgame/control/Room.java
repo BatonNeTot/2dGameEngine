@@ -44,8 +44,15 @@ public class Room {
 
     static void loadRoom(String id, String filePath) {
 
-        com.notjuststudio.engine2dgame.xml.room.Room tmp =
+        final com.notjuststudio.engine2dgame.xml.room.Room tmp;
+        try{
+            tmp =
                 Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.room.Room.class);
+
+        } catch (Parser.InvalidXmlException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
 
         RoomTemplate result = new RoomTemplate();
 

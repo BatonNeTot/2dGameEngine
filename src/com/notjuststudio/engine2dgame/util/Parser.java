@@ -5,7 +5,9 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,18 +15,22 @@ import java.util.List;
  */
 public class Parser {
 
-    public static <T> T loadXml(String filePath, Class objectFactory, Class<T> container) {
+    public static <T> T loadXml(final String filePath, final  Class objectFactory, final Class<T> container) throws InvalidXmlException {
         try {
             return ((JAXBElement<T>) JAXBContext.newInstance(objectFactory).createUnmarshaller().unmarshal(new File(filePath))).getValue();
         } catch (JAXBException e) {
-            System.err.println("Can't load xml");
-            e.printStackTrace();
-            return null;
+            throw new InvalidXmlException("Can't load xml to class" + container.getName() + " from file " + filePath);
         }
 
     }
 
-    public static String stringParser(String string, int number) {
+    public static class InvalidXmlException extends Exception {
+        public InvalidXmlException(String message) {
+            super(message);
+        }
+    }
+
+    public static String stringParser(final String string, final int number) {
         String[] lines = string.split("\n");
         StringBuilder spaces = new StringBuilder();
         for (int i = 0; i < number; i++)
@@ -36,14 +42,14 @@ public class Parser {
         return result.toString();
     }
 
-    public static String stringCompiler(List<String> list, String regex) {
+    public static String stringCompiler(final List<String> list, final String regex) {
         StringBuilder builder = new StringBuilder(list.get(0));
         for (String part : list.subList(1, list.size()))
             builder.append(regex).append(part);
         return builder.toString();
     }
 
-    public static String parseFile(String filePath) {
+    public static String parseFile(final String filePath) {
         StringBuilder shaderSource = new StringBuilder();
         try {
             InputStream in = Class.class.getResourceAsStream(filePath);
@@ -60,11 +66,11 @@ public class Parser {
         return shaderSource.toString();
     }
 
-    public static String packageToString(Class object) {
+    public static String packageToString(final Class object) {
         return "/" + (object.getPackage().toString().split("\\s+")[1].replace(".", "/")) + "/";
     }
 
-    public static String toString(Object object) {
+    public static String toString(final Object object) {
         return object.getClass().getSimpleName() + Integer.toHexString(object.hashCode());
     }
 
@@ -75,11 +81,11 @@ public class Parser {
             MEGA = 3,
             GIGO = 4;
 
-    public static String parsMemorySize(long size) {
+    public static String parsMemorySize(final long size) {
         return parsMemorySize(size, USABLE);
     }
 
-    public static String parsMemorySize(long size, int flag) {
+    public static String parsMemorySize(long size, final int flag) {
         String result = "";
         switch (flag) {
             case USABLE: {
@@ -126,7 +132,7 @@ public class Parser {
         return result;
     }
 
-    public static int spacesInStart(String str) {
+    public static int spacesInStart(final String str) {
         int sum = 0;
         char[] chars = str.toCharArray();
         for (int i = 0; i < chars.length; i++) {
@@ -136,6 +142,39 @@ public class Parser {
                 break;
         }
         return sum;
+    }
+
+    public static String[] getDir(final Object object) {
+        final Field[] fields = object.getClass().getFields();
+        final String[] names = new String[fields.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = fields[i].getName();
+        }
+        return names;
+    }
+
+    public static String formatKeys(String[] keys) {
+        StringBuilder builder = new StringBuilder();
+        for (String key : keys)
+            builder.append(key + " ");
+        return builder.toString();
+    }
+
+    public static String findEqualStart(String[] strings) {
+        if (strings.length == 0)
+            return "";
+        String result = strings[0];
+        for (String string : Arrays.asList(strings).subList(1,strings.length)) {
+            if (string.length() < result.length()) {
+                result = result.substring(0, string.length());
+            }
+            while (!string.startsWith(result)) {
+                result = result.substring(0, result.length() - 1);
+            }
+            if (result.isEmpty())
+                break;
+        }
+        return result;
     }
 
 }

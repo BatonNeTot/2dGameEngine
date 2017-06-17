@@ -78,8 +78,13 @@ class TextFont {
     }
 
     static void loadFont(String id, String filePath) {
-        com.notjuststudio.engine2dgame.xml.font.Font tmp =
+        final com.notjuststudio.engine2dgame.xml.font.Font tmp;
+        try{ tmp =
                 Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.font.Font.class);
+        } catch (Parser.InvalidXmlException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
         try {
             loadFont(id, tmp.getSource(), tmp.getMeta());
         } catch (Exception e) {

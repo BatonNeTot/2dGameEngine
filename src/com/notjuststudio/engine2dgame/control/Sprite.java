@@ -49,8 +49,14 @@ public class Sprite implements Draw.Drawable{
     }
 
     private Sprite(String filePath) {
-        com.notjuststudio.engine2dgame.xml.spr.Sprite tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.spr.Sprite.class);
+        final com.notjuststudio.engine2dgame.xml.spr.Sprite tmp;
+        try {
+            tmp =
+                    Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.spr.Sprite.class);
+        } catch (Parser.InvalidXmlException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
 
         image = ImageLoader.loadImage(new File(tmp.getSource()));
         if (image == null)
