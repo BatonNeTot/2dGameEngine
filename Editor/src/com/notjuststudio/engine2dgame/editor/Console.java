@@ -41,7 +41,7 @@ public class Console extends JTextPane {
         StyleConstants.setForeground(normalStyle, Color.BLACK);
 
         editStyle = addStyle("editput", null);
-        StyleConstants.setForeground(editStyle, Color.GREEN);
+        StyleConstants.setForeground(editStyle, Color.BLUE);
 
         errStyle = addStyle("errput", null);
         StyleConstants.setForeground(errStyle, Color.RED);
@@ -145,13 +145,20 @@ public class Console extends JTextPane {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String command = getCommand();
+                final String[] keysI = get().getKeysI(command);
+                if (keysI.length == 1) {
+                    updateInputLine(command.substring(0, Math.max(0, command.lastIndexOf('.'))) + (command.indexOf('.') >= 0 ? "." : "") + keysI[0]);
+                    return;
+                }
                 final String[] keys = get().getKeys(command);
                 final String potentialCommand = Parser.findEqualStart(keys);
-                if (command.substring(command.lastIndexOf('.') + 1).equals(potentialCommand) && keys.length > 1) {
-                    append("\n");
-                    needNextLine = true;
-                    System.out.println(Parser.formatKeys(keys));
-                    updateInputLine(command);
+                if (command.substring(command.lastIndexOf('.') + 1).equals(potentialCommand)) {
+                    if (keys.length > 1){
+                        append("\n");
+                        needNextLine = true;
+                        System.out.println(Parser.formatKeys(keys));
+                    }
+                    updateInputLine(command.substring(0, Math.max(0, command.lastIndexOf('.'))) + (command.indexOf('.') >= 0 ? "." : "") + potentialCommand);
                 } else if (potentialCommand.startsWith(command.substring(command.lastIndexOf('.') + 1))) {
                     updateInputLine(command.substring(0, Math.max(0, command.lastIndexOf('.'))) + (command.indexOf('.') >= 0 ? "." : "") + potentialCommand);
                 }
@@ -234,6 +241,17 @@ public class Console extends JTextPane {
         }
     }
 
+    String[] getKeysI(String command) {
+        final String[] keys = PyEngine.get().getDir(command.substring(0, Math.max(0, command.lastIndexOf('.'))));
+        final String commandEnd = command.substring(command.lastIndexOf('.') + 1);
+        final List<String> list = new ArrayList<>();
+        for (String key : keys) {
+            if (key.toLowerCase().startsWith(commandEnd.toLowerCase()))
+                list.add(key);
+        }
+        return list.toArray(new String[list.size()]);
+    }
+
     String[] getKeys(String command) {
         final String[] keys = PyEngine.get().getDir(command.substring(0, Math.max(0, command.lastIndexOf('.'))));
         final String commandEnd = command.substring(command.lastIndexOf('.') + 1);
@@ -242,6 +260,7 @@ public class Console extends JTextPane {
             if (key.startsWith(commandEnd))
                 list.add(key);
         }
+        list.sort(String::compareTo);
         return list.toArray(new String[list.size()]);
     }
 
