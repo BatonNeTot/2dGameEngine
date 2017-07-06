@@ -1,8 +1,9 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Container;
 import com.notjuststudio.engine2dgame.util.ImageLoader;
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.back.ObjectFactory;
+import com.notjuststudio.fpnt.FPNTDecoder;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.image.BufferedImage;
@@ -22,27 +23,23 @@ public class Background {
     BufferedImage image;
     int textureID;
 
-    private Background(String filePath) {
-        final com.notjuststudio.engine2dgame.xml.back.Background tmp;
-        try {
-            tmp =
-                    Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.back.Background.class);
-        } catch (Parser.InvalidXmlException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
+    private Background(Container tmp) {
+        stretched = tmp.getBoolean(Container.STRETCHED);
 
-        stretched = tmp.isStretched();
-
-        image = ImageLoader.loadImage(new File(tmp.getSource()));
+        image = tmp.getBufferedImage(Container.SOURCE);
         if (image == null)
             textureID = 0;
         else
             textureID = Loader.loadTexture(image, GL11.GL_REPEAT);
     }
 
-    static void loadBackground(String id, String filePath) {
-        backgroundMap.put(id, new Background(filePath));
+    static void loadBackground(String id, File filePath) {
+        final Container tmp = FPNTDecoder.read(filePath, new Container());
+        backgroundMap.put(id, new Background(tmp));
+    }
+
+    static void loadBackground(String id, Container container) {
+        backgroundMap.put(id, new Background(container));
     }
 
     static Background getBackground(String id) {

@@ -1,16 +1,14 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Container;
 import com.notjuststudio.engine2dgame.util.ImageLoader;
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.font.ObjectFactory;
+import com.notjuststudio.fpnt.FPNTDecoder;
 import org.lwjgl.opengl.GL14;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Georgy on 05.05.2017.
@@ -25,6 +23,46 @@ class TextFont {
     int textureID;
 
     int size;
+
+    TextFont(BufferedImage source, String metaSource) {
+        this.source = source;
+        textureID = Loader.loadTexture(source, GL14.GL_MIRRORED_REPEAT);
+
+        final Scanner reader = new Scanner(metaSource);
+
+        String line = reader.nextLine();
+        String[] fields = line.split(" ");
+        String field = "";
+        for (int i = 0; !field.startsWith("padding"); i++)
+            field = fields[i];
+
+        for (int i = 0; !field.startsWith("size"); i++)
+            field = fields[i];
+
+        size = Integer.parseInt(field.split("=")[1]);
+
+        reader.nextLine();
+        reader.nextLine();
+        int count = Integer.parseInt(reader.nextLine().split(" ")[1].split("=")[1]);
+
+        for (int i = 0; i < count; i++) {
+            fields = reader.nextLine().split(" ");
+            ArrayList<String> list = new ArrayList<>(Arrays.asList(fields));
+            for (int j = list.size() - 1; j >= 0; j--)
+                if (list.get(j).isEmpty())
+                    list.remove(j);
+            charMap.put((char) parse(list.get(1)), new Char(
+                    parse(list.get(2)),
+                    parse(list.get(3)),
+                    parse(list.get(4)),
+                    parse(list.get(5)),
+                    parse(list.get(6)),
+                    parse(list.get(5)) - ((int) (size * 1) - parse(list.get(7))),
+                    parse(list.get(8))
+            ));
+        }
+        reader.close();
+    }
 
     TextFont(String sourcePath, String metaPath) {
         source = ImageLoader.loadImage(new File(sourcePath));
@@ -77,20 +115,17 @@ class TextFont {
         }
     }
 
-    static void loadFont(String id, String filePath) {
-        final com.notjuststudio.engine2dgame.xml.font.Font tmp;
-        try{ tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.font.Font.class);
-        } catch (Parser.InvalidXmlException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
-        try {
-            loadFont(id, tmp.getSource(), tmp.getMeta());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can't read meta file " + tmp.getMeta() + " from " + filePath);
-        }
+    static void loadFont(String id, File filePath) {
+        final Container tmp = FPNTDecoder.read(filePath, new Container());
+        loadFont(id, tmp.getBufferedImage(Container.SOURCE), tmp.getString(Container.META));
+    }
+
+    static void loadFont(String id, Container tmp) {
+        loadFont(id, tmp.getBufferedImage(Container.SOURCE), tmp.getString(Container.META));
+    }
+
+    static void loadFont(String id, BufferedImage source, String metaSource) {
+        fontMap.put(id, new TextFont(source, metaSource));
     }
 
     static void loadFont(String id, String sourcePath, String metaPath) {

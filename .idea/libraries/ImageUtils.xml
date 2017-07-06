@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="ImageUtils">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../ImageUtils/out/artifacts/ImageUtils_jar/ImageUtils.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

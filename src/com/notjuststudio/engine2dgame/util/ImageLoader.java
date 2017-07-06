@@ -111,7 +111,7 @@ public class ImageLoader {
                 String path = file.getPath().replace('\\','/');
                 image = ImageIO.read(Class.class.getClass().getResource(path));
             } catch (Throwable e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } finally {
                 return image;
             }
@@ -136,5 +136,12 @@ public class ImageLoader {
             }
         }
         return image;
+    }
+
+    public static byte[] byteBufferToArray(ByteBuffer buffer) {
+        byte[] buffered = new byte[buffer.remaining()];
+        buffer.get(buffered);
+        buffer.position(0);
+        return  buffered;
     }
 }

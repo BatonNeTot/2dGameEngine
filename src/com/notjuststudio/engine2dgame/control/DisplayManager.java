@@ -58,17 +58,16 @@ public class DisplayManager {
         format = new PixelFormat().withSamples(4);
     }
 
-    static void init(int width, int height, String title, String icon, int state) {
+    static void init(int width, int height, String title, BufferedImage icon, int state) {
 
         DisplayManager.width = width;
         DisplayManager.height = height;
 
         ByteBuffer[] icons = new ByteBuffer[2];
         if (icon != null) {
-            BufferedImage image = ImageLoader.loadImage(new File(icon));
-            if (image != null) {
-                icons[0] = ImageLoader.imageToBuffer(ImageLoader.resize(image, 16, 16));
-                icons[1] = ImageLoader.imageToBuffer(ImageLoader.resize(image, 32, 32));
+            if (icon != null) {
+                icons[0] = ImageLoader.imageToBuffer(ImageLoader.resize(icon, 16, 16));
+                icons[1] = ImageLoader.imageToBuffer(ImageLoader.resize(icon, 32, 32));
             } else {
                 icon = null;
             }

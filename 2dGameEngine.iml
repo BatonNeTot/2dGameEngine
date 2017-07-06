@@ -10,5 +10,7 @@
     <orderEntry type="library" name="jar" level="project" />
     <orderEntry type="library" name="windows" level="project" />
     <orderEntry type="library" name="linux" level="project" />
+    <orderEntry type="library" name="FPNTUtils" level="project" />
+    <orderEntry type="library" name="ImageUtils" level="project" />
   </component>
 </module>

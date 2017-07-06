@@ -2,7 +2,7 @@
   <artifact type="jar" name="Editor:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/Editor_jar</output-path>
     <root id="archive" name="Editor.jar">
-      <element id="module-output" name="Editor" />
+      <element id="module-output" name="EditorOld" />
       <element id="library" level="project" name="jar" />
     </root>
   </artifact>

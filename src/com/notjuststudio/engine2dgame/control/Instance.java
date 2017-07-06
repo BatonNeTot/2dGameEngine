@@ -21,7 +21,7 @@ public class Instance {
         if (
                 x >= entity.getX() - entity.sprite.xOffset && x <= entity.getX() - entity.sprite.xOffset + entity.sprite.getWidth() &&
                         y >= entity.getY() - entity.sprite.yOffset && y <= entity.getY() - entity.sprite.yOffset + entity.sprite.getHeight()) {
-            if (entity.sprite.isAccurateCollusionCheck) {
+            if (entity.sprite.isAccurateCollisionCheck) {
                 x -= entity.getX() - entity.sprite.xOffset;
                 y -= entity.getY() - entity.sprite.yOffset;
                 return ((entity.sprite.getData((int)x, (int)y)>>>24) > 2);

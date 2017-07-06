@@ -7,6 +7,6 @@
       <xs:element type="xs:int" name="y_offset" default="0"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="source"/>
-    <xs:attribute type="xs:boolean" name="accurateCollusionCheck" default="false"/>
+    <xs:attribute type="xs:boolean" name="accurateCollisionCheck" default="false"/>
   </xs:complexType>
 </xs:schema>

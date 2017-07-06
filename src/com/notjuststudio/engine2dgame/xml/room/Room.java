@@ -131,6 +131,10 @@ public class Room {
         return this.entity;
     }
 
+    public void setEntity(List<Entity> entity) {
+        this.entity = entity;
+    }
+
     /**
      * Gets the value of the view property.
      * 
@@ -158,6 +162,10 @@ public class Room {
             view = new ArrayList<View>();
         }
         return this.view;
+    }
+
+    public void setView(List<View> view) {
+        this.view = view;
     }
 
     /**

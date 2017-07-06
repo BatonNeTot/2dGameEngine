@@ -1,8 +1,9 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Container;
 import com.notjuststudio.engine2dgame.util.ImageLoader;
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.spr.ObjectFactory;
+import com.notjuststudio.fpnt.FPNTDecoder;
 import org.lwjgl.opengl.GL14;
 
 import java.io.File;
@@ -23,7 +24,7 @@ public class Sprite implements Draw.Drawable{
 
     boolean isFlipped = false;
 
-    boolean isAccurateCollusionCheck = false;
+    boolean isAccurateCollisionCheck = false;
 
     private BufferedImage image = null;
     int width = 0;
@@ -48,30 +49,26 @@ public class Sprite implements Draw.Drawable{
         this.height = height;
     }
 
-    private Sprite(String filePath) {
-        final com.notjuststudio.engine2dgame.xml.spr.Sprite tmp;
-        try {
-            tmp =
-                    Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.spr.Sprite.class);
-        } catch (Parser.InvalidXmlException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
-
-        image = ImageLoader.loadImage(new File(tmp.getSource()));
+    private Sprite(Container tmp) {
+        image = tmp.getBufferedImage(Container.SOURCE);
         if (image == null)
             textureID = 0;
         else
             textureID = Loader.loadTexture(image, GL14.GL_MIRRORED_REPEAT);
 
-        isAccurateCollusionCheck = tmp.isAccurateCollusionCheck();
+        isAccurateCollisionCheck = tmp.getBoolean(Container.COLLISION, false);
 
-        xOffset = tmp.getXOffset();
-        yOffset = tmp.getYOffset();
+        xOffset = tmp.getInt(Container.X_OFFSET, 0);
+        yOffset = tmp.getInt(Container.Y_OFFSET, 0);
     }
 
-    static void loadSprite(String id, String filePath) {
-        spriteMap.put(id, new Sprite(filePath));
+    static void loadSprite(String id, File filePath) {
+        final Container tmp = FPNTDecoder.read(filePath, new Container());
+        spriteMap.put(id, new Sprite(tmp));
+    }
+
+    static void loadSprite(String id, Container container) {
+        spriteMap.put(id, new Sprite(container));
     }
 
     public static Sprite getSprite(String id) {

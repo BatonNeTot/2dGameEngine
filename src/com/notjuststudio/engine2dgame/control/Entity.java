@@ -1,12 +1,14 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Container;
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.ent.ObjectFactory;
+import com.notjuststudio.fpnt.FPNTDecoder;
 import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyNone;
 import org.python.core.PyString;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,31 +80,28 @@ public class Entity implements Comparable<Entity>{
         return result;
     }
 
-    static void loadEntity(String id, String filePath) {
-        final com.notjuststudio.engine2dgame.xml.ent.Entity tmp;
-        try{
-            tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.ent.Entity.class);
-        } catch (Parser.InvalidXmlException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
+    static void loadEntity(String id, File filePath) {
+        final Container tmp = FPNTDecoder.read(filePath, new Container());
+        loadEntity(id, tmp);
+    }
+
+    static void loadEntity(String id, Container tmp) {
 
         EntityTemplate template = new EntityTemplate();
         template.code = PyEngine.compile("class __tmp__(Entity, Entity.Methods):\n" +
                 "  def _init_(self):\n" +
-                (tmp.getEventInit() == null ? "    pass\n" : Parser.stringParser(tmp.getEventInit(), 4)) +
+                (tmp.getString(Container.INIT) == null ? "    pass\n" : Parser.stringParser(tmp.getString(Container.INIT), 4)) +
                 "  def _step_(self):\n" +
-                (tmp.getEventStep() == null ? "    pass\n" : Parser.stringParser(tmp.getEventStep(), 4)) +
+                (tmp.getString(Container.STEP) == null ? "    pass\n" : Parser.stringParser(tmp.getString(Container.STEP), 4)) +
                 "  def _draw_(self):\n" +
-                (tmp.getEventDraw() == null ? "    pass\n" : Parser.stringParser(tmp.getEventDraw(), 4)) +
+                (tmp.getString(Container.DRAW) == null ? "    pass\n" : Parser.stringParser(tmp.getString(Container.DRAW), 4)) +
                 "  def _destroy_(self):\n" +
-                (tmp.getEventDestroy() == null ? "    pass\n" : Parser.stringParser(tmp.getEventDestroy(), 4)) +
+                (tmp.getString(Container.DESTROY) == null ? "    pass\n" : Parser.stringParser(tmp.getString(Container.DESTROY), 4)) +
                 "__obj__ = __tmp__()\n" +
                 "del __tmp__");
-        template.sprite = tmp.getSprite();
-        template.visible = tmp.isVisible();
-        template.depth = tmp.getDepth();
+        template.sprite = tmp.getString(Container.SPRITE);
+        template.visible = tmp.getBoolean(Container.VISIBLE, true);
+        template.depth = tmp.getInt(Container.DEPTH, 0);
 
         templateMap.put(id, template);
     }

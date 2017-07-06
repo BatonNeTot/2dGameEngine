@@ -15,9 +15,10 @@
       <xs:element name="entity" type="source" maxOccurs="unbounded"/>
       <xs:element name="room" type="source" maxOccurs="unbounded"/>
     </xs:sequence>
+    <xs:attribute type="xs:string" name="firstRoom"/>
     <xs:attribute type="xs:string" name="title" default="Game"/>
     <xs:attribute type="xs:string" name="icon"/>
-    <xs:attribute type="xs:ID" name="backgroundID"/>
+    <xs:attribute type="xs:string" name="backgroundID"/>
     <xs:attribute type="xs:unsignedShort" name="widthView" use="required"/>
     <xs:attribute type="xs:unsignedShort" name="heightView" use="required"/>
   </xs:complexType>

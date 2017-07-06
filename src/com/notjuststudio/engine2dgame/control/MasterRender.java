@@ -172,7 +172,8 @@ class MasterRender {
         Draw.text(0, Room.getHeight(), debug.setText(
                 Game.gpuRenderer + "\n" +
                         String.format("Memory usage: %.2f", (totalMemory / (double)Game.maxMemory) * 100) + "% (" + Parser.parsMemorySize(totalMemory, Parser.MEGA) + "/" + Parser.parsMemorySize(Game.maxMemory, Parser.MEGA) + ")\n" +
-                        String.format("FPS: %.2f\n", DisplayManager.getFPS())
+                        String.format("FPS: %.2f\n", DisplayManager.getFPS()) +
+                        "Current state: " + (Room.isChanging ? "changing \"" : "room \"" + Room.getCurrentRoom().name + "\"")
         ));
         Draw.isDraw = false;
     }

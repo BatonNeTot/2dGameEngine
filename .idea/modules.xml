@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../2dEditor/2dEditor.iml" filepath="$PROJECT_DIR$/../2dEditor/2dEditor.iml" />
       <module fileurl="file://$PROJECT_DIR$/2dGameEngine.iml" filepath="$PROJECT_DIR$/2dGameEngine.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Editor/Editor.iml" filepath="$PROJECT_DIR$/Editor/Editor.iml" />
     </modules>
   </component>
 </project>

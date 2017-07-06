@@ -1,11 +1,17 @@
 package com.notjuststudio.engine2dgame.util;
 
+import com.notjuststudio.engine2dgame.xml.spr.ObjectFactory;
+import com.notjuststudio.engine2dgame.xml.spr.Sprite;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,13 +21,24 @@ import java.util.List;
  */
 public class Parser {
 
-    public static <T> T loadXml(final String filePath, final  Class objectFactory, final Class<T> container) throws InvalidXmlException {
+    public static <T> T loadXml(final String filePath, final Class objectFactory, final Class<T> container) throws InvalidXmlException {
         try {
             return ((JAXBElement<T>) JAXBContext.newInstance(objectFactory).createUnmarshaller().unmarshal(new File(filePath))).getValue();
         } catch (JAXBException e) {
             throw new InvalidXmlException("Can't load xml to class " + container.getName() + " from file " + filePath);
         }
 
+    }
+
+    public static <K, V> void saveXml(final String filePath, final Class<K> factoryClass, final Class<V> containerClass, final V container) throws InvalidXmlException {
+        final File file = new File(filePath);
+        file.delete();
+        try {
+            JAXBContext.newInstance(factoryClass).createMarshaller().marshal(new JAXBElement<>(new QName("", containerClass.getSimpleName()), containerClass, null, container), file);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            throw new InvalidXmlException("Can't save xml from class " + container.toString() + " to file " + filePath);
+        }
     }
 
     public static class InvalidXmlException extends Exception {
@@ -175,6 +192,17 @@ public class Parser {
                 break;
         }
         return result;
+    }
+
+    public static byte[] byteBufferToArray(ByteBuffer buffer) {
+        byte[] buffered = new byte[buffer.remaining()];
+        buffer.get(buffered);
+        buffer.position(0);
+        return  buffered;
+    }
+
+    public static ByteBuffer byteArrayToBuffer(byte[] data) {
+        return (ByteBuffer) ByteBuffer.allocateDirect(data.length).order(ByteOrder.nativeOrder()).put(data).flip();
     }
 
 }

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="FPNTUtils">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../FPNTUtils/out/artifacts/FPNTUtils_jar/FPNTUtils.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

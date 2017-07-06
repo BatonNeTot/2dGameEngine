@@ -1,11 +1,13 @@
 package com.notjuststudio.engine2dgame.control;
 
+import com.notjuststudio.engine2dgame.util.Container;
 import com.notjuststudio.engine2dgame.util.ImageLoader;
 import com.notjuststudio.engine2dgame.util.Parser;
-import com.notjuststudio.engine2dgame.xml.room.ObjectFactory;
+import com.notjuststudio.fpnt.FPNTDecoder;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL30;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -32,6 +34,8 @@ public class Room {
 
     private static Map<String, RoomTemplate> roomMap = new HashMap<>();
 
+    String name;
+
     int width;
     int height;
 
@@ -42,47 +46,41 @@ public class Room {
 
     String background;
 
-    static void loadRoom(String id, String filePath) {
+    static void loadRoom(String id, File filePath) {
+        final Container tmp = FPNTDecoder.read(filePath, new Container());
+        loadRoom(id, tmp);
+    }
 
-        final com.notjuststudio.engine2dgame.xml.room.Room tmp;
-        try{
-            tmp =
-                Parser.loadXml(filePath, ObjectFactory.class, com.notjuststudio.engine2dgame.xml.room.Room.class);
-
-        } catch (Parser.InvalidXmlException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
-
+    static void loadRoom(String id, Container tmp) {
         RoomTemplate result = new RoomTemplate();
 
-        result.width = tmp.getWidth();
-        result.height = tmp.getHeight();
+        result.width = tmp.getInt(Container.WIDTH);
+        result.height = tmp.getInt(Container.HEIGHT);
 
         result.entities = new ArrayList<>();
 
-        for (com.notjuststudio.engine2dgame.xml.room.Entity entity : tmp.getEntity()) {
-            result.entities.add(new EntityTemplate(entity.getX(), entity.getY(), entity.getId()));
+        for (Container.Entity entity : tmp.getEntityList(Container.LIST)) {
+            result.entities.add(new EntityTemplate(entity.x, entity.y, entity.id));
         }
 
-        result.usingViews = tmp.isUsingViews();
+        result.usingViews = tmp.getBoolean(Container.USING_VIEWS, false);
 
         result.views = new ArrayList<>();
 
-        for (com.notjuststudio.engine2dgame.xml.room.View view : tmp.getView()) {
+        for (Container.View view : tmp.getViewList(Container.LIST)) {
             result.views.add(new ViewTemplate(
-                    view.getX(),
-                    view.getY(),
-                    view.getWidth(),
-                    view.getHeight(),
-                    view.getViewX(),
-                    view.getViewY(),
-                    view.getViewWidth(),
-                    view.getViewHeight()
+                    view.x,
+                    view.y,
+                    view.width,
+                    view.height,
+                    view.viewX,
+                    view.viewY,
+                    view.viewWidth,
+                    view.viewHeight
             ));
         }
 
-        result.background = tmp.getBackground();
+        result.background = tmp.getString(Container.BACKGROUND);
 
         roomMap.put(id, result);
     }
@@ -105,6 +103,8 @@ public class Room {
         }
 
         result.background = template.background;
+
+        result.name = id;
 
         roomStack.add(result);
         result.init();
